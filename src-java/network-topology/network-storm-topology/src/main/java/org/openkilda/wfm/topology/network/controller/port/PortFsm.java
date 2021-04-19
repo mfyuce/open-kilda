@@ -35,6 +35,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.squirrelframework.foundation.fsm.StateMachineBuilder;
 import org.squirrelframework.foundation.fsm.StateMachineBuilderFactory;
+import org.squirrelframework.foundation.fsm.StateMachineLogger;
 
 @Slf4j
 public final class PortFsm extends AbstractBaseFsm<PortFsm, PortFsmState, PortFsmEvent,
@@ -222,8 +223,13 @@ public final class PortFsm extends AbstractBaseFsm<PortFsm, PortFsmState, PortFs
         }
 
         public PortFsm produce(PortReportFsm.PortReportFsmFactory reportFactory, Endpoint endpoint, Isl history) {
-            return builder.newStateMachine(PortFsmState.INIT, reportFactory.produce(endpoint),
+            PortFsm fsm = builder.newStateMachine(PortFsmState.INIT, reportFactory.produce(endpoint),
                     portPropertiesRepository, endpoint, history);
+            // DEBUG - begin
+            StateMachineLogger fsmLogger = new StateMachineLogger(fsm);
+            fsmLogger.startLogging();
+            // DEBUG - end
+            return fsm;
         }
     }
 

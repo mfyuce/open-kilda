@@ -61,7 +61,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.RetryPolicy;
 import org.squirrelframework.foundation.fsm.StateMachineBuilder;
 import org.squirrelframework.foundation.fsm.StateMachineBuilderFactory;
-import org.squirrelframework.foundation.fsm.StateMachineLogger;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -661,12 +660,7 @@ public final class SwitchFsm extends AbstractBaseFsm<SwitchFsm, SwitchFsmState, 
         }
 
         public SwitchFsm produce(PersistenceManager persistenceManager, SwitchId switchId, NetworkOptions options) {
-            SwitchFsm fsm = builder.newStateMachine(SwitchFsmState.INIT, persistenceManager, switchId, options);
-            // DEBUG - begin
-            StateMachineLogger fsmLogger = new StateMachineLogger(fsm);
-            fsmLogger.startLogging();
-            // DEBUG - end
-            return fsm;
+            return builder.newStateMachine(SwitchFsmState.INIT, persistenceManager, switchId, options);
         }
     }
 

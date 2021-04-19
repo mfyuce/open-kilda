@@ -62,7 +62,6 @@ import net.jodah.failsafe.RetryPolicy;
 import org.squirrelframework.foundation.fsm.Condition;
 import org.squirrelframework.foundation.fsm.StateMachineBuilder;
 import org.squirrelframework.foundation.fsm.StateMachineBuilderFactory;
-import org.squirrelframework.foundation.fsm.StateMachineLogger;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -862,12 +861,6 @@ public final class IslFsm extends AbstractBaseFsm<IslFsm, IslFsmState, IslFsmEve
             IslFsm fsm = builder.newStateMachine(
                     IslFsmState.OPERATIONAL, clock, persistenceManager, dashboardLoggerBuilder.build(log),
                     options, reference);
-
-            // DEBUG - begin
-            StateMachineLogger fsmLogger = new StateMachineLogger(fsm);
-            fsmLogger.startLogging();
-            // DEBUG - end
-
             fsm.start(context);
             return fsm;
         }

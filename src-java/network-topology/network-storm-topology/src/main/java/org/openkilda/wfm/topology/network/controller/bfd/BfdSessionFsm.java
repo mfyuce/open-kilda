@@ -52,6 +52,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.squirrelframework.foundation.fsm.StateMachineBuilder;
 import org.squirrelframework.foundation.fsm.StateMachineBuilderFactory;
+import org.squirrelframework.foundation.fsm.StateMachineLogger;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -144,7 +145,7 @@ public final class BfdSessionFsm
     public boolean disable() {
         if (! isTerminated()) {
             handle(Event.DISABLE);
-            return false;
+            return isTerminated();
         }
         return true;
     }
@@ -622,6 +623,12 @@ public final class BfdSessionFsm
             BfdSessionFsm entity = builder.newStateMachine(
                     State.ENTER, persistenceManager, switchOnlineStatusMonitor, endpointStatusMonitor, carrier,
                     logical, physicalPortNumber, sessionData);
+
+            // DEBUG - begin
+            StateMachineLogger fsmLogger = new StateMachineLogger(entity);
+            fsmLogger.startLogging();
+            // DEBUG - end
+
             entity.start(BfdSessionFsmContext.builder().build());
 
             entity.disableIfConfigured();
