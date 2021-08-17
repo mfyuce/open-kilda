@@ -51,6 +51,9 @@ class Greeter(noviflow_pb2_grpc.NoviFlowGrpcServicer):
                            name="port_" + str(request.logicalportno),
                            port_numbers=request.portno,
                            type=request.logicalporttype)
+        if request.logicalportno in self.storage.logical_ports:
+            return noviflow_pb2.CliReply(reply_status=187)
+
         self.storage.logical_ports[request.logicalportno] = port
         return noviflow_pb2.CliReply(reply_status=0)
 
