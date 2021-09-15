@@ -90,7 +90,7 @@ public class ControllerToSpeakerProxyBoltTest {
 
     private GeneralTopologyContext generalTopologyContext;
 
-    private final Map<String, String> topologyConfig = Collections.emptyMap();
+    private final Map<String, Object> topologyConfig = Collections.emptyMap();
 
     @BeforeClass
     public static void initPersistenceManager() {
@@ -169,7 +169,7 @@ public class ControllerToSpeakerProxyBoltTest {
                 .build();
         Tuple input = new TupleImpl(
                 generalTopologyContext, new Values(event, new CommandContext()),
-                ZOOKEEPER_SPOUT, STREAM_SPOUT_DEFAULT);
+                ZooKeeperSpout.SPOUT_ID, ZOOKEEPER_SPOUT, STREAM_SPOUT_DEFAULT);
         subject.execute(input);
         verify(outputCollector).ack(eq(input));
     }
@@ -177,7 +177,7 @@ public class ControllerToSpeakerProxyBoltTest {
     private void injectRegionUpdate(RegionMappingUpdate update) {
         Tuple input = new TupleImpl(
                 generalTopologyContext, new Values(update, new CommandContext()),
-                SWITCH_MONITOR_BOLT, RegionTrackerBolt.STREAM_REGION_NOTIFICATION_ID);
+                SwitchMonitorBolt.BOLT_ID, SWITCH_MONITOR_BOLT, RegionTrackerBolt.STREAM_REGION_NOTIFICATION_ID);
         subject.execute(input);
         verify(outputCollector).ack(eq(input));
     }
@@ -189,7 +189,7 @@ public class ControllerToSpeakerProxyBoltTest {
         Tuple input = new TupleImpl(
                 generalTopologyContext,
                 new Values(switchId.toString(), discoCommand, new CommandContext(discoCommand)),
-                TASK_ID_SPOUT, STREAM_SPOUT_DEFAULT);
+                ComponentType.SPEAKER_KAFKA_SPOUT, TASK_ID_SPOUT, STREAM_SPOUT_DEFAULT);
         subject.execute(input);
         verify(outputCollector).ack(eq(input));
         return discoCommand;

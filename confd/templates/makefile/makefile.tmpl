@@ -28,7 +28,7 @@ build-server42dpdk:
 	./src-cpp/server42/build_docker.sh
 {{end}}
 docker/storm/lib:
-	docker/base/hacks/storm.requirements.download.sh
+#	docker/base/hacks/storm.requirements.download.sh
 
 build-latest: build-base compile-green
 	docker-compose build

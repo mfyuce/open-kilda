@@ -65,8 +65,6 @@ public class MonotonicClockTest {
         ManualClock baseClock = new ManualClock(Instant.EPOCH, ZoneOffset.UTC);
 
         when(topologyContext.getThisTaskId()).thenReturn(1);
-        when(topologyContext.getComponentId(Mockito.eq((int) Constants.SYSTEM_TASK_ID)))
-                .thenReturn(Constants.SYSTEM_COMPONENT_ID);
         when(topologyContext.getComponentOutputFields(Constants.SYSTEM_COMPONENT_ID, Constants.SYSTEM_TICK_STREAM_ID))
                 .thenReturn(new Fields());
 
@@ -161,7 +159,7 @@ public class MonotonicClockTest {
     }
 
     private Tuple makeSystemTickTuple() {
-        return new TupleImpl(topologyContext, Collections.emptyList(),
+        return new TupleImpl(topologyContext, Collections.emptyList(), Constants.SYSTEM_COMPONENT_ID,
                              (int) Constants.SYSTEM_TASK_ID, Constants.SYSTEM_TICK_STREAM_ID);
 
     }

@@ -16,29 +16,29 @@
 ARG base_image=kilda/base-ubuntu
 FROM ${base_image}
 
-ENV PACKAGE apache-storm-1.2.1
+ENV PACKAGE apache-storm-2.2.0
+
+# must not be fetched during container build (i.e. must be prefetched and hardcoded during version bumps)
+# can be fetched by bin/fetch-storm-sha512.sh
+ARG PACKAGE_SHA512=2A25468D5FCA2BC6C63E7378300B961021AC321C91422D35455F18E61DF967B2CE675996508B5C4C14B5B884219C65ED76ABFB3E1359C4968C866EB226CAAAA5
 
 WORKDIR /tmp/
 
 RUN    \
     apt -y update \
     && apt -y install net-tools jq \
-    && wget -q https://archive.apache.org/dist/storm/apache-storm-1.2.1/$PACKAGE.tar.gz \
-    && wget -q https://archive.apache.org/dist/storm/apache-storm-1.2.1/$PACKAGE.tar.gz.md5 \
-    && sed 's/\ //g' $PACKAGE.tar.gz.md5 > $PACKAGE.tmp.md5 \
-    && awk -F ":" '{print $2 " " $1}' $PACKAGE.tmp.md5 > $PACKAGE.tar.gz.md5 \
-    && md5sum -c $PACKAGE.tar.gz.md5 \
+    && wget -q https://archive.apache.org/dist/storm/$PACKAGE/$PACKAGE.tar.gz \
+    && echo "$PACKAGE_SHA512 $PACKAGE.tar.gz" > $PACKAGE.tar.gz.sha512 \
+    && sha512sum -c $PACKAGE.tar.gz.sha512 \
     && tar -xzf $PACKAGE.tar.gz --directory /opt/ \
     && ln -s /opt/$PACKAGE /opt/storm \
     && ln -s /usr/bin/python3 /usr/bin/python \
     && rm -rfv /tmp/*
 
-
-
 WORKDIR /opt/storm/
 
 COPY storm.yaml /opt/storm/conf/storm.yaml
 COPY log4j2 /opt/storm/log4j2
-COPY lib/*.jar /opt/storm/lib/
+#COPY lib/*.jar /opt/storm/lib/
 COPY simple-storm-supervisor-healthcheck.sh /simple-storm-supervisor-healthcheck.sh
 COPY simple-storm-ui-healthcheck.sh /simple-storm-ui-healthcheck.sh
