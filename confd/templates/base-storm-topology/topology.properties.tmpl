@@ -3,30 +3,6 @@
 
 environment.naming.prefix = {{ getv "/kilda_environment_naming_prefix" }}
 
-#######
-# Storm-specific topology configuration.
-#
-# Configure timeout milliseconds used for disruptor queue wait strategy. Can be used to tradeoff latency vs. CPU usage.
-{{- if exists "/kilda_storm_disruptor_wait_timeout" }}
-disruptor.wait.timeout = {{ getv "/kilda_storm_disruptor_wait_timeout" }}
-{{- else }}
-# disruptor.wait.timeout =
-{{- end }}
-#
-# The maximum age in milliseconds a batch can be before being sent to the next thread.
-{{- if exists "/kilda_storm_disruptor_batch_timeout" }}
-disruptor.batch.timeout = {{ getv "/kilda_storm_disruptor_batch_timeout" }}
-{{- else }}
-# disruptor.batch.timeout =
-{{- end }}
-#
-# The amount of milliseconds a spout should sleep when emits no tuples.
-{{- if exists "/kilda_storm_spout_wait_sleep_timeout" }}
-spout.wait.sleep.time = {{ getv "/kilda_storm_spout_wait_sleep_timeout" }}
-{{- else }}
-# spout.wait.sleep.time =
-{{- end }}
-
 kafka.hosts = {{ getv "/kilda_kafka_hosts" }}
 kafka.partitions.default = 1
 kafka.replication.default = 3

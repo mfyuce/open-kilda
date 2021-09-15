@@ -29,6 +29,7 @@ import org.openkilda.wfm.topology.utils.InfoDataTranslator;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.storm.generated.StormTopology;
+import org.apache.storm.kafka.spout.FirstPollOffsetStrategy;
 import org.apache.storm.kafka.spout.KafkaSpout;
 import org.apache.storm.kafka.spout.KafkaSpoutConfig;
 import org.apache.storm.opentsdb.bolt.OpenTsdbBolt;
@@ -102,10 +103,10 @@ public class OpenTsdbTopology extends AbstractTopology<OpenTsdbTopologyConfig> {
         String otsdbTopic = topologyConfig.getKafkaOtsdbTopic();
 
         //FIXME: We have to use the Message class for messaging.
-        KafkaSpoutConfig<String, InfoData> config = getKafkaSpoutConfigBuilder(otsdbTopic, OTSDB_SPOUT_ID)
-                .setValue(InfoDataDeserializer.class)
+        KafkaSpoutConfig<String, InfoData> config = makeKafkaSpoutConfig(
+                Collections.singletonList(otsdbTopic), OTSDB_SPOUT_ID, InfoDataDeserializer.class)
                 .setRecordTranslator(new InfoDataTranslator())
-                .setFirstPollOffsetStrategy(KafkaSpoutConfig.FirstPollOffsetStrategy.UNCOMMITTED_EARLIEST)
+                .setFirstPollOffsetStrategy(FirstPollOffsetStrategy.UNCOMMITTED_EARLIEST)
                 .setTupleTrackingEnforced(true)
                 .build();
 

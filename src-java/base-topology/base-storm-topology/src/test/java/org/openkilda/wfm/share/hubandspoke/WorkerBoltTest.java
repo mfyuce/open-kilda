@@ -84,10 +84,6 @@ public class WorkerBoltTest {
                 .build();
         worker = new WorkerDummyImpl(config);
 
-        when(topologyContext.getComponentId(HUB_TASK_ID)).thenReturn(HUB_COMPONENT);
-        when(topologyContext.getComponentId(SPOUT_TASK_ID)).thenReturn(SPOUT_COMPONENT);
-        when(topologyContext.getComponentId(COORDINATOR_TASK_ID)).thenReturn(COORDINATOR_COMPONENT);
-
         when(topologyContext.getComponentOutputFields(HUB_COMPONENT, Utils.DEFAULT_STREAM_ID))
                 .thenReturn(STREAM_FIELDS);
         when(topologyContext.getComponentOutputFields(SPOUT_COMPONENT, Utils.DEFAULT_STREAM_ID))
@@ -115,16 +111,19 @@ public class WorkerBoltTest {
         String key = "key";
         String payload = "payload";
 
-        Tuple request = new TupleImpl(topologyContext, new Values(key, payload, new CommandContext()), HUB_TASK_ID,
-                                      Utils.DEFAULT_STREAM_ID);
+        Tuple request = new TupleImpl(
+                topologyContext, new Values(key, payload, new CommandContext()), HUB_COMPONENT, HUB_TASK_ID,
+                Utils.DEFAULT_STREAM_ID);
         worker.execute(request);
 
-        Tuple response = new TupleImpl(topologyContext, new Values(key, payload, new CommandContext()), SPOUT_TASK_ID,
-                                       Utils.DEFAULT_STREAM_ID);
+        Tuple response = new TupleImpl(
+                topologyContext, new Values(key, payload, new CommandContext()), SPOUT_COMPONENT, SPOUT_TASK_ID,
+                Utils.DEFAULT_STREAM_ID);
         worker.execute(response);
 
-        Tuple timeout = new TupleImpl(topologyContext, new Values(key, payload, new CommandContext()),
-                                      COORDINATOR_TASK_ID, Utils.DEFAULT_STREAM_ID);
+        Tuple timeout = new TupleImpl(
+                topologyContext, new Values(key, payload, new CommandContext()), COORDINATOR_COMPONENT,
+                COORDINATOR_TASK_ID, Utils.DEFAULT_STREAM_ID);
         worker.execute(timeout);
 
         Assert.assertNull("Must not produce unhandled input errors", worker.lastError);
@@ -135,17 +134,20 @@ public class WorkerBoltTest {
         String key = "key";
         String payload = "payload";
 
-        Tuple request = new TupleImpl(topologyContext, new Values(key, payload, new CommandContext()), HUB_TASK_ID,
-                                      Utils.DEFAULT_STREAM_ID);
+        Tuple request = new TupleImpl(
+                topologyContext, new Values(key, payload, new CommandContext()), HUB_COMPONENT, HUB_TASK_ID,
+                Utils.DEFAULT_STREAM_ID);
         worker.execute(request);
 
-        Tuple timeout = new TupleImpl(topologyContext, new Values(key, payload, new CommandContext()),
-                                      COORDINATOR_TASK_ID, Utils.DEFAULT_STREAM_ID);
+        Tuple timeout = new TupleImpl(
+                topologyContext, new Values(key, payload, new CommandContext()), COORDINATOR_COMPONENT,
+                COORDINATOR_TASK_ID, Utils.DEFAULT_STREAM_ID);
         worker.execute(timeout);
         reset(output);
 
-        Tuple response = new TupleImpl(topologyContext, new Values(key, payload, new CommandContext()), SPOUT_TASK_ID,
-                                       Utils.DEFAULT_STREAM_ID);
+        Tuple response = new TupleImpl(
+                topologyContext, new Values(key, payload, new CommandContext()), SPOUT_COMPONENT, SPOUT_TASK_ID,
+                Utils.DEFAULT_STREAM_ID);
         worker.execute(response);
 
         // if timeout have not cleaned pending request, our dummy will try to pass response to the HUB.
@@ -158,14 +160,16 @@ public class WorkerBoltTest {
         String key = "key";
         String payload = "payload";
 
-        Tuple request = new TupleImpl(topologyContext, new Values(key, payload, new CommandContext()), HUB_TASK_ID,
-                                      Utils.DEFAULT_STREAM_ID);
+        Tuple request = new TupleImpl(
+                topologyContext, new Values(key, payload, new CommandContext()), HUB_COMPONENT, HUB_TASK_ID,
+                Utils.DEFAULT_STREAM_ID);
         worker.execute(request);
 
         worker.emitHubResponse = false;
         reset(output);
-        Tuple response = new TupleImpl(topologyContext, new Values(key, payload, new CommandContext()), SPOUT_TASK_ID,
-                                       Utils.DEFAULT_STREAM_ID);
+        Tuple response = new TupleImpl(
+                topologyContext, new Values(key, payload, new CommandContext()), SPOUT_COMPONENT, SPOUT_TASK_ID,
+                Utils.DEFAULT_STREAM_ID);
         worker.execute(response);
         verify(output).ack(response);
         verifyNoMoreInteractions(output);

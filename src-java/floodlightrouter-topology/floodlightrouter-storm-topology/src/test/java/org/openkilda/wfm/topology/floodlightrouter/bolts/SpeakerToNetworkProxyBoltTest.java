@@ -81,7 +81,7 @@ public class SpeakerToNetworkProxyBoltTest {
 
     private GeneralTopologyContext generalTopologyContext;
 
-    private final Map<String, String> topologyConfig = Collections.emptyMap();
+    private final Map<String, Object> topologyConfig = Collections.emptyMap();
 
     @BeforeClass
     public static void initPersistenceManager() {
@@ -126,7 +126,7 @@ public class SpeakerToNetworkProxyBoltTest {
         Tuple tuple = new TupleImpl(
                 generalTopologyContext, new Values(
                         switchAlpha.toString(), discoveryConfirmation, new CommandContext(discoveryConfirmation)),
-                TASK_ID_SPOUT, STREAM_SPOUT_DEFAULT);
+                ComponentType.KILDA_TOPO_DISCO_KAFKA_SPOUT, TASK_ID_SPOUT, STREAM_SPOUT_DEFAULT);
         subject.execute(tuple);
         ArgumentCaptor<Values> discoReplyValuesCaptor = ArgumentCaptor.forClass(Values.class);
 
@@ -148,7 +148,7 @@ public class SpeakerToNetworkProxyBoltTest {
                 .build();
         Tuple input = new TupleImpl(
                 generalTopologyContext, new Values(event, new CommandContext()),
-                ZOOKEEPER_SPOUT, STREAM_SPOUT_DEFAULT);
+                ZooKeeperSpout.SPOUT_ID, ZOOKEEPER_SPOUT, STREAM_SPOUT_DEFAULT);
         subject.execute(input);
         verify(outputCollector).ack(eq(input));
     }

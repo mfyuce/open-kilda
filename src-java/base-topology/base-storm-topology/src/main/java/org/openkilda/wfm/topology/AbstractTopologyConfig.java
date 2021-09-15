@@ -33,12 +33,15 @@ public interface AbstractTopologyConfig {
     @Converter(SecondsToMilisConverter.class)
     int getLocalExecutionTime();
 
+    // TODO: del
     @Key("disruptor.wait.timeout")
     Integer getDisruptorWaitTimeout();
 
+    // TODO: del
     @Key("disruptor.batch.timeout")
     Integer getDisruptorBatchTimeout();
 
+    // TODO: del
     @Key("spout.wait.sleep.time")
     Integer getSpoutWaitSleepTime();
 
