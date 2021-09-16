@@ -33,7 +33,8 @@ RUN    \
     && tar -xzf $PACKAGE.tar.gz --directory /opt/ \
     && ln -s /opt/$PACKAGE /opt/storm \
     && ln -s /usr/bin/python3 /usr/bin/python \
-    && rm -rfv /tmp/*
+    && rm -rfv /tmp/* \
+    && rm /opt/$PACKAGE/lib/jackson-core-*.jar
 
 WORKDIR /opt/storm/
 
