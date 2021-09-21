@@ -181,10 +181,9 @@ kilda_storm_parallelism_workers_count: 1
 
 kilda_storm_flow_monitoring_parallelism: 2
 
-kilda_storm_disruptor_wait_timeout: 1000
-kilda_storm_disruptor_batch_timeout: 10
-kilda_storm_spout_wait_sleep_timeout: 100
-
+kilda_storm_spout_wait_sleep_millis: 1000
+kilda_storm_bolt_idle_sleep_millis: 1000
+kilda_storm_backpressure_sleep_millis: 1000
 
 kilda_server42_control_http_port: 9002
 kilda_server42_control_switch_to_vlan_1000: "1000=00:00:d7:61:46:7b:46:69,00:00:1b:45:18:d6:71:5a,00:00:e3:7d:94:02:9b:f0"

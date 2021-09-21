@@ -41,6 +41,7 @@ public interface AbstractTopologyConfig {
     @Key("disruptor.batch.timeout")
     Integer getDisruptorBatchTimeout();
 
+    // TODO: del
     @Key("spout.wait.sleep.time")
     Integer getSpoutWaitSleepTime();
 

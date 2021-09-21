@@ -65,7 +65,6 @@ import org.apache.storm.kafka.bolt.selector.DefaultTopicSelector;
 import org.apache.storm.kafka.spout.FirstPollOffsetStrategy;
 import org.apache.storm.kafka.spout.KafkaSpout;
 import org.apache.storm.kafka.spout.KafkaSpoutConfig;
-import org.apache.storm.policy.WaitStrategyPark;
 import org.apache.storm.thrift.TException;
 import org.apache.storm.topology.BoltDeclarer;
 import org.apache.storm.topology.IRichBolt;
@@ -237,10 +236,6 @@ public abstract class AbstractTopology<T extends AbstractTopologyConfig> impleme
         Config stormConfig = new Config();
 
         getTopologyWorkers().ifPresent(stormConfig::setNumWorkers);
-        if (topologyConfig.getSpoutWaitSleepTime() != null) {
-            stormConfig.put(Config.TOPOLOGY_SPOUT_WAIT_STRATEGY, WaitStrategyPark.class.getName());
-            stormConfig.put(Config.TOPOLOGY_SPOUT_WAIT_PARK_MICROSEC, topologyConfig.getSpoutWaitSleepTime());
-        }
         if (topologyConfig.getUseLocalCluster()) {
             getTopologyParallelism().ifPresent(stormConfig::setMaxTaskParallelism);
         }
