@@ -576,7 +576,7 @@ class ProtectedPathV1Spec extends HealthCheckSpecification {
 
         then: "Flow state is changed to UP"
         //it often fails in scope of the whole spec on the hardware env, that's why '* 1.5' is added
-        Wrappers.wait(discoveryInterval * 1.5 + WAIT_OFFSET) {
+        Wrappers.wait(discoveryInterval + 1.5 * WAIT_OFFSET) {
             assert northbound.getFlowStatus(flow.id).status == FlowState.UP
         }
 
