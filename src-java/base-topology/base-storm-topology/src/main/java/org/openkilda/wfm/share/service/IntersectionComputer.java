@@ -24,6 +24,7 @@ import org.openkilda.model.SwitchId;
 import com.google.common.collect.Sets;
 import lombok.Value;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -129,6 +130,61 @@ public class IntersectionComputer {
                 .collect(Collectors.toSet());
 
         return !Sets.intersection(primaryEdges, protectedEdges).isEmpty();
+    }
+
+    /**
+     * Calculates intersection (shared part) among the paths starting from the source endpoint.
+     *
+     * @param paths the paths to examine.
+     * @return the overlapping path segments.
+     */
+    public static List<PathSegment> calculatePathIntersectionFromSource(Collection<FlowPath> paths) {
+        if (paths.size() < 2) {
+            throw new IllegalArgumentException("At least 2 paths must be provided");
+        }
+
+        List<PathSegment>[] pathSegments = paths.stream().map(FlowPath::getSegments).toArray(List[]::new);
+
+        int minLength = pathSegments[0].size();
+        for (List<?> segments : pathSegments) {
+            if (segments.isEmpty()) {
+                throw new IllegalArgumentException("All paths mustn't be empty");
+            }
+            if (minLength > segments.size()) {
+                minLength = segments.size();
+            }
+        }
+        SwitchId source = pathSegments[0].get(0).getSrcSwitchId();
+        for (List<PathSegment> path : pathSegments) {
+            if (!path.get(0).getSrcSwitchId().equals(source)) {
+                throw new IllegalArgumentException("All paths must have the same source endpoint");
+            }
+        }
+        List<PathSegment> result = new ArrayList<>();
+        for (int i = 0; i < minLength; i++) {
+            List<PathSegment> firstPath = pathSegments[0];
+            PathSegment firstSegment = firstPath.get(i);
+            boolean allEqual = true;
+            for (List<PathSegment> anotherPath : pathSegments) {
+                if (firstPath != anotherPath) {
+                    PathSegment anotherSegment = anotherPath.get(i);
+                    if (!firstSegment.getSrcSwitchId().equals(anotherSegment.getSrcSwitchId())
+                            || firstSegment.getSrcPort() != anotherSegment.getSrcPort()
+                            || !firstSegment.getDestSwitchId().equals(anotherSegment.getDestSwitchId())
+                            || firstSegment.getDestPort() != anotherSegment.getDestPort()) {
+                        allEqual = false;
+                        break;
+                    }
+                }
+            }
+            if (allEqual) {
+                result.add(firstSegment);
+            } else {
+                // no reason to continue, the different segments have found.
+                break;
+            }
+        }
+        return result;
     }
 
     /**
