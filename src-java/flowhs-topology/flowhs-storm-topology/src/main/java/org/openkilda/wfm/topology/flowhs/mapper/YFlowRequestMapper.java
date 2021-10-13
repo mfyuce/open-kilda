@@ -15,8 +15,12 @@
 
 package org.openkilda.wfm.topology.flowhs.mapper;
 
+import org.openkilda.messaging.command.yflow.SubFlowDto;
+import org.openkilda.messaging.command.yflow.SubFlowSharedEndpointEncapsulation;
 import org.openkilda.messaging.command.yflow.YFlowRequest;
+import org.openkilda.model.FlowEndpoint;
 import org.openkilda.model.YFlow;
+import org.openkilda.model.YSubFlow;
 import org.openkilda.wfm.topology.flowhs.model.DetectConnectedDevices;
 import org.openkilda.wfm.topology.flowhs.model.RequestedFlow;
 
@@ -39,6 +43,37 @@ public abstract class YFlowRequestMapper {
     @Mapping(target = "protectedPathMeterId", ignore = true)
     @Mapping(target = "sharedEndpointMeterId", ignore = true)
     public abstract YFlow toYFlow(YFlowRequest request);
+
+    @Mapping(target = "yFlowId", source = "YFlowId")
+    @Mapping(target = "type", ignore = true)
+    @Mapping(target = "sharedEndpoint.outerVlanId", ignore = true)
+    @Mapping(target = "sharedEndpoint.innerVlanId", ignore = true)
+    @Mapping(target = "sharedEndpoint.trackLldpConnectedDevices", ignore = true)
+    @Mapping(target = "sharedEndpoint.trackArpConnectedDevices", ignore = true)
+    public abstract YFlowRequest toYFlowRequest(YFlow yFlow);
+
+    /**
+     * Convert {@link YSubFlow} to a {@link SubFlowDto}.
+     */
+    public SubFlowDto toSubFlowDto(YSubFlow ySubFlow) {
+        if (ySubFlow == null) {
+            return null;
+        }
+
+        return SubFlowDto.builder()
+                .flowId(ySubFlow.getSubFlowId())
+                .endpoint(FlowEndpoint.builder()
+                        .switchId(ySubFlow.getEndpointSwitchId())
+                        .portNumber(ySubFlow.getEndpointPort())
+                        .outerVlanId(ySubFlow.getEndpointVlan())
+                        .innerVlanId(ySubFlow.getEndpointInnerVlan())
+                        .build())
+                .sharedEndpoint(SubFlowSharedEndpointEncapsulation.builder()
+                        .vlanId(ySubFlow.getSharedEndpointVlan())
+                        .innerVlanId(ySubFlow.getSharedEndpointInnerVlan())
+                        .build())
+                .build();
+    }
 
     /**
      * Convert {@link YFlowRequest} to a few {@link RequestedFlow}.
