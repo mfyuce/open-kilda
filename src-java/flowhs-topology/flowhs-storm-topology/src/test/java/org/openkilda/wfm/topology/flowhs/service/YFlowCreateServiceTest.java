@@ -384,9 +384,7 @@ public class YFlowCreateServiceTest extends AbstractYFlowTest {
                 handleTimeout(flowCreateService, flowDeleteService, service, key);
             }
             SpeakerFlowSegmentResponse commandResponse = buildSuccessfulSpeakerResponse(request);
-            flowCreateService.handleAsyncResponse(key, commandResponse);
-            flowDeleteService.handleAsyncResponse(key, commandResponse);
-            service.handleAsyncResponse(key, commandResponse);
+            handleAsyncResponse(flowCreateService, flowDeleteService, service, key, commandResponse);
         });
     }
 
