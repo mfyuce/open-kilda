@@ -25,6 +25,7 @@ import static org.openkilda.wfm.topology.flowhs.FlowHsTopology.Stream.ROUTER_TO_
 import static org.openkilda.wfm.topology.flowhs.FlowHsTopology.Stream.ROUTER_TO_FLOW_SWAP_ENDPOINTS_HUB;
 import static org.openkilda.wfm.topology.flowhs.FlowHsTopology.Stream.ROUTER_TO_FLOW_UPDATE_HUB;
 import static org.openkilda.wfm.topology.flowhs.FlowHsTopology.Stream.ROUTER_TO_YFLOW_CREATE_HUB;
+import static org.openkilda.wfm.topology.flowhs.FlowHsTopology.Stream.ROUTER_TO_YFLOW_DELETE_HUB;
 import static org.openkilda.wfm.topology.flowhs.FlowHsTopology.Stream.ROUTER_TO_YFLOW_READ;
 import static org.openkilda.wfm.topology.utils.KafkaRecordTranslator.FIELD_ID_KEY;
 import static org.openkilda.wfm.topology.utils.KafkaRecordTranslator.FIELD_ID_PAYLOAD;
@@ -41,6 +42,7 @@ import org.openkilda.messaging.command.flow.FlowRequest;
 import org.openkilda.messaging.command.flow.FlowRerouteRequest;
 import org.openkilda.messaging.command.flow.SwapFlowEndpointRequest;
 import org.openkilda.messaging.command.yflow.SubFlowsReadRequest;
+import org.openkilda.messaging.command.yflow.YFlowDeleteRequest;
 import org.openkilda.messaging.command.yflow.YFlowPathsReadRequest;
 import org.openkilda.messaging.command.yflow.YFlowReadRequest;
 import org.openkilda.messaging.command.yflow.YFlowRequest;
@@ -153,6 +155,10 @@ public class RouterBolt extends AbstractBolt {
                         throw new UnsupportedOperationException(format("Y-flow operation %s is not supported",
                                 request.getType()));
                 }
+            } else if (data instanceof YFlowDeleteRequest) {
+                YFlowDeleteRequest request = (YFlowDeleteRequest) data;
+                log.debug("Received a y-flow delete request {} with key {}", request, key);
+                emitWithContext(ROUTER_TO_YFLOW_DELETE_HUB.name(), input, new Values(key, request.getYFlowId(), data));
             } else if (data instanceof YFlowsDumpRequest) {
                 log.debug("Received a y-flow dump request {} with key {}", data, key);
                 emitWithContext(ROUTER_TO_YFLOW_READ.name(), input, new Values(key, data));
@@ -183,6 +189,7 @@ public class RouterBolt extends AbstractBolt {
         declarer.declareStream(ROUTER_TO_FLOW_SWAP_ENDPOINTS_HUB.name(),
                 new Fields(FIELD_ID_KEY, FIELD_ID_PAYLOAD, FIELD_ID_CONTEXT));
         declarer.declareStream(ROUTER_TO_YFLOW_CREATE_HUB.name(), STREAM_FIELDS);
+        declarer.declareStream(ROUTER_TO_YFLOW_DELETE_HUB.name(), STREAM_FIELDS);
         declarer.declareStream(ROUTER_TO_YFLOW_READ.name(),
                 new Fields(FIELD_ID_KEY, FIELD_ID_PAYLOAD, FIELD_ID_CONTEXT));
         declarer.declareStream(ZkStreams.ZK.toString(),
