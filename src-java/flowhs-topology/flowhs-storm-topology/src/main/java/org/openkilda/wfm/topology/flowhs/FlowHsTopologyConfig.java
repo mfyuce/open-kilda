@@ -165,6 +165,18 @@ public interface FlowHsTopologyConfig extends AbstractTopologyConfig {
     @Default("3")
     int getYFlowCreateSpeakerCommandRetriesLimit();
 
+    @Key("y_flow.create.speaker.timeout.seconds")
+    @Default("10")
+    int getYFlowCreateSpeakerTimeoutSeconds();
+
+    @Key("y_flow.delete.speaker.command.retries")
+    @Default("3")
+    int getYFlowDeleteSpeakerCommandRetriesLimit();
+
+    @Key("y_flow.delete.speaker.timeout.seconds")
+    @Default("10")
+    int getYFlowDeleteSpeakerTimeoutSeconds();
+
     @Key("y_flow.read.retries")
     @Default("3")
     int getYFlowReadRetriesLimit();
