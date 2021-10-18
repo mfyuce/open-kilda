@@ -13,29 +13,21 @@
  *   limitations under the License.
  */
 
-package org.openkilda.rulemanager.adapters;
+package org.openkilda.rulemanager.action;
 
-import org.openkilda.model.Flow;
-import org.openkilda.model.FlowPath;
-import org.openkilda.model.FlowTransitEncapsulation;
-import org.openkilda.model.PathId;
-import org.openkilda.model.Switch;
-import org.openkilda.model.SwitchId;
-import org.openkilda.model.SwitchProperties;
-import org.openkilda.rulemanager.DataAdapter;
-
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Builder;
 import lombok.Value;
 
-import java.util.Map;
-
 @Value
+@JsonSerialize
 @Builder
-public class InMemoryDataAdapter implements DataAdapter {
+public class PushVxlanAction implements Action {
 
-    Map<PathId, FlowPath> flowPaths;
-    Map<PathId, Flow> flows;
-    Map<SwitchId, Switch> switches;
-    Map<SwitchId, SwitchProperties> switchProperties;
-    Map<PathId, FlowTransitEncapsulation> transitEncapsulation;
+    int vni;
+
+    @Override
+    public ActionType getType() {
+        return ActionType.PUSH_VXLAN;
+    }
 }

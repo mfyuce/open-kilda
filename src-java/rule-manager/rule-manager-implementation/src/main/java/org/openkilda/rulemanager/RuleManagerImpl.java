@@ -24,6 +24,7 @@ import static org.openkilda.model.cookie.Cookie.MULTITABLE_TRANSIT_DROP_COOKIE;
 
 import org.openkilda.model.Flow;
 import org.openkilda.model.FlowPath;
+import org.openkilda.model.FlowTransitEncapsulation;
 import org.openkilda.model.PathId;
 import org.openkilda.model.Switch;
 import org.openkilda.model.SwitchId;
@@ -47,11 +48,13 @@ public class RuleManagerImpl implements RuleManager {
 
     public RuleManagerImpl(RuleManagerConfig config) {
         serviceRulesFactory = new ServiceRulesGeneratorFactory(config);
-        flowRulesFactory = new FlowRulesGeneratorFactory();
+        flowRulesFactory = new FlowRulesGeneratorFactory(config);
     }
 
     @Override
     public List<SpeakerCommandData> buildRulesForFlowPath(FlowPath flowPath, DataAdapter adapter) {
+
+
         // todo: implement build rules for path
         return null;
     }
@@ -69,8 +72,8 @@ public class RuleManagerImpl implements RuleManager {
 
         List<SpeakerCommandData> result = buildServiceRules(sw, switchProperties);
 
-        result.addAll(buildFlowRules(adapter.getSwitches(), adapter.getSwitchProperties(),
-                adapter.getFlowPaths(), adapter.getFlows()));
+        result.addAll(buildFlowRules(switchId, adapter.getSwitches(), adapter.getSwitchProperties(),
+                adapter.getFlowPaths(), adapter.getFlows(), adapter.getTransitEncapsulation()));
 
         return result;
     }
@@ -103,44 +106,59 @@ public class RuleManagerImpl implements RuleManager {
         return generators;
     }
 
-    private List<SpeakerCommandData> buildFlowRules(Map<SwitchId, Switch> switches,
-                                                    Map<SwitchId, SwitchProperties> switchProperties,
-                                                    Map<PathId, FlowPath> flowPaths,
-                                                    Map<PathId, Flow> flows) {
+    private List<SpeakerCommandData> buildFlowRules(
+            SwitchId switchId, Map<SwitchId, Switch> switches, Map<SwitchId, SwitchProperties> switchProperties,
+            Map<PathId, FlowPath> flowPaths, Map<PathId, Flow> flows,
+            Map<PathId, FlowTransitEncapsulation> transitEncapsulation) {
+
         return flowPaths.values().stream()
-                .flatMap(flowPath -> buildFlowRules(switches, switchProperties,
-                        flowPath, flows.get(flowPath.getPathId())).stream())
+                .flatMap(flowPath -> buildFlowRules(switchId, switches, switchProperties, flowPath,
+                        flows.get(flowPath.getPathId()), transitEncapsulation.get(flowPath.getPathId()), flowPaths)
+                        .stream())
                 .collect(Collectors.toList());
     }
 
     /**
      * Builds command data only for switches present in the map. Silently skips all others.
      */
-    private List<SpeakerCommandData> buildFlowRules(Map<SwitchId, Switch> switches,
-                                                    Map<SwitchId, SwitchProperties> switchProperties,
-                                                    FlowPath flowPath,
-                                                    Flow flow) {
+    private List<SpeakerCommandData> buildFlowRules(
+            SwitchId switchId, Map<SwitchId, Switch> switches, Map<SwitchId, SwitchProperties> switchProperties,
+            FlowPath flowPath, Flow flow, FlowTransitEncapsulation encapsulation, Map<PathId, FlowPath> flowPaths) {
         List<SpeakerCommandData> result = new ArrayList<>();
 
-        SwitchId srcSwitchId = flowPath.getSrcSwitchId();
-        if (switches.containsKey(srcSwitchId)) {
-            result.addAll(buildIngressCommands(switches.get(srcSwitchId), switchProperties.get(srcSwitchId),
-                    flowPath, flow));
+        if (switchId.equals(flowPath.getSrcSwitchId())) {
+            result.addAll(buildIngressCommands(switches.get(switchId), switchProperties.get(switchId),
+                    flowPath, flow, encapsulation));
         }
+        if (!flowPath.isOneSwitchFlow()) {
+            if (switchId.equals(flowPath.getDestSwitchId())) {
+                result.addAll(buildEgressCommands(switches.get(switchId), switchProperties.get(switchId),
+                        flowPath, flow, encapsulation));
+            }
+        }
+
         // todo: add transit, egress and other flow rules
 
         return result;
     }
 
-    private List<SpeakerCommandData> buildIngressCommands(Switch sw, SwitchProperties switchProperties,
-                                                          FlowPath flowPath, Flow flow) {
+    private List<SpeakerCommandData> buildIngressCommands(
+            Switch sw, SwitchProperties switchProperties, FlowPath flowPath, Flow flow,
+            FlowTransitEncapsulation encapsulation) {
         List<RuleGenerator> generators = new ArrayList<>();
 
-        generators.add(flowRulesFactory.getIngressRuleGenerator(flowPath, flow));
+        generators.add(flowRulesFactory.getIngressRuleGenerator(flowPath, flow, encapsulation));
         // todo: add arp, lldp, flow loop, flow mirror, etc
 
         return generators.stream()
                 .flatMap(generator -> generator.generateCommands(sw).stream())
                 .collect(Collectors.toList());
+    }
+
+    private List<SpeakerCommandData> buildEgressCommands(
+            Switch sw, SwitchProperties switchProperties, FlowPath flowPath, Flow flow,
+            FlowTransitEncapsulation encapsulation) {
+        // TODO
+        return new ArrayList<>();
     }
 }

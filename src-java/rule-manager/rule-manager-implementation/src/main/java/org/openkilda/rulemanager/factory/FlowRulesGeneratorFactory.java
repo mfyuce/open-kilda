@@ -19,15 +19,23 @@ import static java.lang.String.format;
 
 import org.openkilda.model.Flow;
 import org.openkilda.model.FlowPath;
+import org.openkilda.model.FlowTransitEncapsulation;
 import org.openkilda.model.PathSegment;
+import org.openkilda.rulemanager.RuleManagerConfig;
 import org.openkilda.rulemanager.factory.generator.flow.SingleTableIngressRuleGenerator;
 
 public class FlowRulesGeneratorFactory {
 
+    private final RuleManagerConfig config;
+
+    public FlowRulesGeneratorFactory(RuleManagerConfig config) {
+        this.config = config;
+    }
+
     /**
      * Get ingress rule generator.
      */
-    public RuleGenerator getIngressRuleGenerator(FlowPath flowPath, Flow flow) {
+    public RuleGenerator getIngressRuleGenerator(FlowPath flowPath, Flow flow, FlowTransitEncapsulation encapsulation) {
         PathSegment segment = flowPath.getSegments().stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException(
                         format("No segments found for path %s", flowPath.getPathId())));
@@ -42,8 +50,10 @@ public class FlowRulesGeneratorFactory {
             return null;
         } else {
             return SingleTableIngressRuleGenerator.builder()
+                    .config(config)
                     .flowPath(flowPath)
                     .flow(flow)
+                    .encapsulation(encapsulation)
                     .build();
         }
     }

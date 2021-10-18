@@ -20,9 +20,7 @@ import static org.openkilda.model.FlowEncapsulationType.VXLAN;
 import static org.openkilda.model.FlowEndpoint.makeVlanStack;
 
 import org.openkilda.adapter.FlowSideAdapter;
-import org.openkilda.model.FlowEncapsulationType;
 import org.openkilda.model.FlowEndpoint;
-import org.openkilda.model.MeterId;
 import org.openkilda.model.Switch;
 import org.openkilda.model.SwitchFeature;
 import org.openkilda.rulemanager.Constants;
@@ -30,17 +28,15 @@ import org.openkilda.rulemanager.Field;
 import org.openkilda.rulemanager.FlowSpeakerCommandData;
 import org.openkilda.rulemanager.FlowSpeakerCommandData.FlowSpeakerCommandDataBuilder;
 import org.openkilda.rulemanager.Instructions;
-import org.openkilda.rulemanager.MeterSpeakerCommandData;
 import org.openkilda.rulemanager.OfFlowFlag;
 import org.openkilda.rulemanager.OfTable;
 import org.openkilda.rulemanager.OfVersion;
 import org.openkilda.rulemanager.SpeakerCommandData;
 import org.openkilda.rulemanager.Utils;
 import org.openkilda.rulemanager.action.Action;
-import org.openkilda.rulemanager.action.PopVlanAction;
-import org.openkilda.rulemanager.action.PushVlanAction;
 import org.openkilda.rulemanager.action.PushVxlanAction;
 import org.openkilda.rulemanager.match.FieldMatch;
+import org.openkilda.rulemanager.match.Match;
 
 import com.google.common.collect.Sets;
 import lombok.experimental.SuperBuilder;
@@ -51,7 +47,7 @@ import java.util.List;
 import java.util.Set;
 
 @SuperBuilder
-public class SingleTableIngressRuleGenerator extends IngressRuleGenerator {
+public class MultiTableIngressRuleGenerator extends IngressRuleGenerator {
 
     @Override
     public List<SpeakerCommandData> generateCommands(Switch sw) {
@@ -74,7 +70,7 @@ public class SingleTableIngressRuleGenerator extends IngressRuleGenerator {
 
     private FlowSpeakerCommandData buildFlowCommand(Switch sw, FlowSideAdapter flowSide) {
         FlowEndpoint endpoint = flowSide.getEndpoint();
-        Set<FieldMatch> match = Sets.newHashSet(
+        Set<Match> match = Sets.newHashSet(
                 FieldMatch.builder().field(Field.IN_PORT).value(endpoint.getPortNumber()).build());
         if (!isFullPortFlow(flowSide.getEndpoint())) {
             match.add(FieldMatch.builder().field(Field.VLAN_VID).value(endpoint.getOuterVlanId()).build());
