@@ -72,16 +72,11 @@ import org.openkilda.northbound.dto.v2.flows.MirrorPointStatus;
 import org.openkilda.northbound.dto.v2.flows.PathStatus;
 import org.openkilda.northbound.dto.v2.flows.SwapFlowPayload;
 
-import com.google.common.collect.Sets;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-import java.time.format.DateTimeFormatter;
-
-@Mapper(componentModel = "spring",
-        imports = {FlowEndpointPayload.class, FlowEndpointV2.class, DetectConnectedDevicesPayload.class,
-                DetectConnectedDevicesV2.class, DetectConnectedDevicesDto.class, Sets.class, DateTimeFormatter.class})
+@Mapper(componentModel = "spring", uses = {KildaTypeMapper.class, TimeMapper.class})
 public abstract class FlowMapper {
     /**
      * Map {@link FlowDto} into {@link FlowPayload}.
@@ -124,8 +119,7 @@ public abstract class FlowMapper {
     }
 
     @Mapping(target = "flowId", ignore = true)
-    @Mapping(target = "maxLatency",
-            expression = "java(flowPatchDto.getMaxLatency() != null ? flowPatchDto.getMaxLatency() * 1000000L : null)")
+    @Mapping(target = "maxLatency", qualifiedByName = "timeMillisToNanos")
     @Mapping(target = "priority", source = "priority")
     @Mapping(target = "periodicPings", source = "periodicPings")
     @Mapping(target = "targetPathComputationStrategy", source = "targetPathComputationStrategy")
@@ -147,38 +141,25 @@ public abstract class FlowMapper {
     @Mapping(target = "flowId", ignore = true)
     @Mapping(target = "bandwidth", source = "maximumBandwidth")
     @Mapping(target = "allocateProtectedPath", source = "allocateProtectedPath")
-    @Mapping(target = "maxLatency",
-            expression = "java(flowPatchDto.getMaxLatency() != null ? flowPatchDto.getMaxLatency() * 1000000L : null)")
-    @Mapping(target = "maxLatencyTier2",
-            expression = "java(flowPatchDto.getMaxLatencyTier2() != null ? "
-                    + "flowPatchDto.getMaxLatencyTier2() * 1000000L : null)")
+    @Mapping(target = "maxLatency", qualifiedByName = "timeMillisToNanos")
+    @Mapping(target = "maxLatencyTier2", qualifiedByName = "timeMillisToNanos")
     @Mapping(target = "priority", source = "priority")
     @Mapping(target = "periodicPings", source = "periodicPings")
     @Mapping(target = "diverseFlowId", source = "diverseFlowId")
     public abstract FlowPatch toFlowPatch(FlowPatchV2 flowPatchDto);
 
-    @Mapping(target = "trackLldpConnectedDevices",
-            expression = "java(flowPatchEndpoint.getDetectConnectedDevices() != null ? "
-                    + "flowPatchEndpoint.getDetectConnectedDevices().isLldp() : null)")
-    @Mapping(target = "trackArpConnectedDevices",
-            expression = "java(flowPatchEndpoint.getDetectConnectedDevices() != null ? "
-                    + "flowPatchEndpoint.getDetectConnectedDevices().isArp() : null)")
+    @Mapping(target = "trackLldpConnectedDevices", source = "detectConnectedDevices.lldp")
+    @Mapping(target = "trackArpConnectedDevices", source = "detectConnectedDevices.arp")
     public abstract PatchEndpoint toPatchEndpoint(FlowPatchEndpoint flowPatchEndpoint);
 
     @Mapping(target = "bandwidth", source = "maximumBandwidth")
-    @Mapping(target = "detectConnectedDevices", expression = "java(new DetectConnectedDevicesDto("
-            + "request.getSource().getDetectConnectedDevices().isLldp(), "
-            + "request.getSource().getDetectConnectedDevices().isArp(), "
-            + "request.getDestination().getDetectConnectedDevices().isLldp(), "
-            + "request.getDestination().getDetectConnectedDevices().isArp()))")
+    @Mapping(target = "detectConnectedDevices", source = "request")
     @Mapping(target = "transitEncapsulationId", ignore = true)
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "bulkUpdateFlowIds", ignore = true)
     @Mapping(target = "doNotRevert", ignore = true)
-    @Mapping(target = "maxLatency",
-            expression = "java(request.getMaxLatency() != null ? request.getMaxLatency() * 1000000L : null)")
-    @Mapping(target = "maxLatencyTier2",
-            expression = "java(request.getMaxLatencyTier2() != null ? request.getMaxLatencyTier2() * 1000000L : null)")
+    @Mapping(target = "maxLatency", qualifiedByName = "timeMillisToNanos")
+    @Mapping(target = "maxLatencyTier2", qualifiedByName = "timeMillisToNanos")
     @Mapping(target = "loopSwitchId", ignore = true)
     public abstract FlowRequest toFlowRequest(FlowRequestV2 request);
 
@@ -191,8 +172,7 @@ public abstract class FlowMapper {
     @Mapping(target = "doNotRevert", ignore = true)
     @Mapping(target = "diverseFlowId", ignore = true)
     @Mapping(target = "affinityFlowId", ignore = true)
-    @Mapping(target = "maxLatency",
-            expression = "java(payload.getMaxLatency() != null ? payload.getMaxLatency() * 1000000L : null)")
+    @Mapping(target = "maxLatency", qualifiedByName = "timeMillisToNanos")
     @Mapping(target = "maxLatencyTier2", ignore = true)
     @Mapping(target = "loopSwitchId", ignore = true)
     @Mapping(target = "strictBandwidth", ignore = true)
@@ -302,12 +282,12 @@ public abstract class FlowMapper {
         return result;
     }
 
-    @Mapping(target = "sourceSwitch", expression = "java(request.getSource().getSwitchId())")
-    @Mapping(target = "destinationSwitch", expression = "java(request.getDestination().getSwitchId())")
-    @Mapping(target = "sourcePort", expression = "java(request.getSource().getPortNumber())")
-    @Mapping(target = "destinationPort", expression = "java(request.getDestination().getPortNumber())")
-    @Mapping(target = "sourceVlan", expression = "java(request.getSource().getVlanId())")
-    @Mapping(target = "destinationVlan", expression = "java(request.getDestination().getVlanId())")
+    @Mapping(target = "sourceSwitch", source = "source.switchId")
+    @Mapping(target = "destinationSwitch", source = "destination.switchId")
+    @Mapping(target = "sourcePort", source = "source.portNumber")
+    @Mapping(target = "destinationPort", source = "destination.portNumber")
+    @Mapping(target = "sourceVlan", source = "source.vlanId")
+    @Mapping(target = "destinationVlan", source = "destination.vlanId")
     public abstract SwapFlowDto toSwapFlowDto(SwapFlowPayload request);
 
     public abstract FlowValidationDto toFlowValidationDto(FlowValidationResponse response);
@@ -319,10 +299,8 @@ public abstract class FlowMapper {
     @Mapping(target = "diverseWith", source = "f.diverseWith")
     @Mapping(target = "source", source = "source")
     @Mapping(target = "destination", source = "destination")
-    @Mapping(target = "maxLatency",
-            expression = "java(f.getMaxLatency() != null ? f.getMaxLatency() / 1000000L : null)")
-    @Mapping(target = "maxLatencyTier2",
-            expression = "java(f.getMaxLatencyTier2() != null ? f.getMaxLatencyTier2() / 1000000L : null)")
+    @Mapping(target = "maxLatency", qualifiedByName = "timeNanosToMillis")
+    @Mapping(target = "maxLatencyTier2", qualifiedByName = "timeNanosToMillis")
     @Mapping(target = "loopSwitchId", source = "f.loopSwitchId")
     @Mapping(target = "forwardPathLatencyNs", source = "f.forwardLatency")
     @Mapping(target = "reversePathLatencyNs", source = "f.reverseLatency")
@@ -331,8 +309,7 @@ public abstract class FlowMapper {
     @Mapping(target = "id", source = "flowId")
     @Mapping(target = "maximumBandwidth", source = "bandwidth")
     @Mapping(target = "ignoreBandwidth", source = "ignoreBandwidth")
-    @Mapping(target = "maxLatency",
-            expression = "java(f.getMaxLatency() != null ? f.getMaxLatency() / 1000000L : null)")
+    @Mapping(target = "maxLatency", qualifiedByName = "timeNanosToMillis")
     @Mapping(target = "status", source = "state")
     @Mapping(target = "created", source = "createdTime")
     @Mapping(target = "pinned", source = "pinned")
@@ -347,8 +324,7 @@ public abstract class FlowMapper {
     @Mapping(target = "destination", ignore = true)
     @Mapping(target = "created", ignore = true)
     @Mapping(target = "status", ignore = true)
-    @Mapping(target = "maxLatency",
-            expression = "java(f.getMaxLatency() != null ? f.getMaxLatency() / 1000000L : null)")
+    @Mapping(target = "maxLatency", qualifiedByName = "timeNanosToMillis")
     protected abstract void generatedFlowResponsePayloadMap(@MappingTarget FlowResponsePayload target, FlowDto f);
 
     @Mapping(target = "flowId", source = "flowId")
@@ -452,7 +428,6 @@ public abstract class FlowMapper {
         if (encapsulationType == null) {
             return null;
         }
-
         return FlowEncapsulationType.valueOf(encapsulationType.toUpperCase());
     }
 
@@ -519,15 +494,13 @@ public abstract class FlowMapper {
         return message;
     }
 
-    @Mapping(target = "switchId", expression = "java(new org.openkilda.model.SwitchId(payload.getSwitchId()))")
     public abstract FlowLoopResponse toFlowLoopResponse(FlowLoopDto payload);
 
     @Mapping(target = "flowId", source = "payload.flowId")
     @Mapping(target = "switchId", source = "payload.loopSwitchId")
     public abstract FlowLoopResponse toFlowLoopResponse(FlowResponse response);
 
-    @Mapping(target = "timestamp",
-            expression = "java(DateTimeFormatter.ISO_INSTANT.format(entry.getStatusChangeTimestamp()))")
+    @Mapping(target = "timestamp", source = "statusChangeTimestamp", qualifiedByName = "nbApiTimestamp")
     public abstract FlowHistoryStatus toFlowHistoryStatus(FlowStatusTimestampsEntry entry);
 
     public abstract FlowMirrorPointCreateRequest toFlowMirrorPointCreateRequest(String flowId,
@@ -565,4 +538,14 @@ public abstract class FlowMapper {
     }
 
     public abstract MirrorPointStatus toMirrorPointStatus(MirrorPointStatusDto dto);
+
+    @Mapping(target = "srcLldp", source = "source.detectConnectedDevices.lldp")
+    @Mapping(target = "srcArp", source = "source.detectConnectedDevices.arp")
+    @Mapping(target = "dstLldp", source = "destination.detectConnectedDevices.lldp")
+    @Mapping(target = "dstArp", source = "destination.detectConnectedDevices.arp")
+    @Mapping(target = "srcSwitchLldp", ignore = true)
+    @Mapping(target = "srcSwitchArp", ignore = true)
+    @Mapping(target = "dstSwitchLldp", ignore = true)
+    @Mapping(target = "dstSwitchArp", ignore = true)
+    public abstract DetectConnectedDevicesDto toDetectConnectedDevicesDto(FlowRequestV2 request);
 }

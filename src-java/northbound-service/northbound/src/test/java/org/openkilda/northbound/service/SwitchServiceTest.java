@@ -29,16 +29,6 @@ import org.openkilda.messaging.info.switches.SwitchSyncResponse;
 import org.openkilda.model.SwitchId;
 import org.openkilda.northbound.MessageExchanger;
 import org.openkilda.northbound.config.KafkaConfig;
-import org.openkilda.northbound.converter.ConnectedDeviceMapper;
-import org.openkilda.northbound.converter.ConnectedDeviceMapperImpl;
-import org.openkilda.northbound.converter.FlowMapper;
-import org.openkilda.northbound.converter.FlowMapperImpl;
-import org.openkilda.northbound.converter.LagPortMapper;
-import org.openkilda.northbound.converter.LagPortMapperImpl;
-import org.openkilda.northbound.converter.PortPropertiesMapper;
-import org.openkilda.northbound.converter.PortPropertiesMapperImpl;
-import org.openkilda.northbound.converter.SwitchMapper;
-import org.openkilda.northbound.converter.SwitchMapperImpl;
 import org.openkilda.northbound.dto.v1.switches.RulesSyncDto;
 import org.openkilda.northbound.dto.v1.switches.RulesSyncResult;
 import org.openkilda.northbound.dto.v1.switches.SwitchSyncResult;
@@ -52,6 +42,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -139,6 +130,7 @@ public class SwitchServiceTest {
 
     @TestConfiguration
     @Import(KafkaConfig.class)
+    @ComponentScan({"org.openkilda.northbound.converter"})
     @PropertySource({"classpath:northbound.properties"})
     static class Config {
         @Bean
@@ -150,31 +142,5 @@ public class SwitchServiceTest {
         public SwitchService switchService(MessagingChannel messagingChannel) {
             return new SwitchServiceImpl(messagingChannel);
         }
-
-        @Bean
-        public SwitchMapper switchMapper() {
-            return new SwitchMapperImpl();
-        }
-
-        @Bean
-        public ConnectedDeviceMapper connectedDeviceMapper() {
-            return new ConnectedDeviceMapperImpl();
-        }
-
-        @Bean
-        public PortPropertiesMapper portPropertiesMapper() {
-            return new PortPropertiesMapperImpl();
-        }
-
-        @Bean
-        public FlowMapper flowMapper() {
-            return new FlowMapperImpl();
-        }
-
-        @Bean
-        public LagPortMapper lagMapper() {
-            return new LagPortMapperImpl();
-        }
     }
-
 }
