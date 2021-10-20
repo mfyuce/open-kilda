@@ -15,9 +15,16 @@
 
 package org.openkilda.wfm.topology.flowhs.service;
 
+import static java.lang.String.format;
+
+import org.openkilda.messaging.error.ErrorData;
+import org.openkilda.messaging.error.ErrorMessage;
+import org.openkilda.messaging.error.ErrorType;
 import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.persistence.repositories.FlowRepository;
 import org.openkilda.persistence.repositories.RepositoryFactory;
+import org.openkilda.persistence.repositories.YFlowRepository;
+import org.openkilda.wfm.CommandContext;
 import org.openkilda.wfm.share.utils.FsmExecutor;
 import org.openkilda.wfm.topology.flowhs.fsm.common.FlowProcessingFsm;
 
@@ -38,6 +45,7 @@ public abstract class FsmBasedFlowProcessingService<T extends FlowProcessingFsm<
 
     protected final R carrier;
     protected final FlowRepository flowRepository;
+    protected final YFlowRepository yFlowRepository;
 
     @Getter(AccessLevel.PROTECTED)
     private boolean active;
@@ -48,6 +56,7 @@ public abstract class FsmBasedFlowProcessingService<T extends FlowProcessingFsm<
         this.carrier = carrier;
         RepositoryFactory repositoryFactory = persistenceManager.getRepositoryFactory();
         flowRepository = repositoryFactory.createFlowRepository();
+        yFlowRepository = repositoryFactory.createYFlowRepository();
     }
 
     protected void registerFsm(String key, T fsm) {
@@ -80,6 +89,22 @@ public abstract class FsmBasedFlowProcessingService<T extends FlowProcessingFsm<
         if (removed != null) {
             keyByFlowId.remove(removed.getFlowId());
         }
+    }
+
+    /**
+     * Sends error response to northbound component.
+     */
+    protected void sendErrorResponseToNorthbound(ErrorType errorType, String errorMessage, String errorDescription,
+                                                 CommandContext commandContext) {
+        ErrorData errorData = new ErrorData(errorType, errorMessage, errorDescription);
+        carrier.sendNorthboundResponse(new ErrorMessage(errorData, commandContext.getCreateTime(),
+                commandContext.getCorrelationId()));
+    }
+
+    protected void sendForbiddenSubFlowOperationToNorthbound(String flowId, CommandContext commandContext) {
+        sendErrorResponseToNorthbound(ErrorType.REQUEST_INVALID, "Could not modify flow",
+                format("%s is a sub-flow of a y-flow. Operations on sub-flows are forbidden.", flowId),
+                commandContext);
     }
 
     /**

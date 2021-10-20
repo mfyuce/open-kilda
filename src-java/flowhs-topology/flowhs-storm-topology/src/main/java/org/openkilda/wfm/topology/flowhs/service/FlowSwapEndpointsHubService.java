@@ -22,6 +22,7 @@ import org.openkilda.messaging.info.InfoMessage;
 import org.openkilda.messaging.info.flow.FlowResponse;
 import org.openkilda.persistence.PersistenceManager;
 import org.openkilda.wfm.CommandContext;
+import org.openkilda.wfm.share.utils.FsmExecutor;
 import org.openkilda.wfm.topology.flowhs.fsm.swapendpoints.FlowSwapEndpointsContext;
 import org.openkilda.wfm.topology.flowhs.fsm.swapendpoints.FlowSwapEndpointsFsm;
 import org.openkilda.wfm.topology.flowhs.fsm.swapendpoints.FlowSwapEndpointsFsm.Event;
@@ -31,21 +32,13 @@ import org.openkilda.wfm.topology.flowhs.model.RequestedFlow;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Slf4j
-public class FlowSwapEndpointsHubService {
-    private Map<String, FlowSwapEndpointsFsm> fsms = new HashMap<>();
-
+public class FlowSwapEndpointsHubService extends FsmBasedFlowProcessingService<FlowSwapEndpointsFsm, Event,
+        FlowSwapEndpointsContext,  FlowSwapEndpointsHubCarrier> {
     private final FlowSwapEndpointsFsm.Factory fsmFactory;
 
-    private final FlowSwapEndpointsHubCarrier carrier;
-
-    private boolean active;
-
     public FlowSwapEndpointsHubService(FlowSwapEndpointsHubCarrier carrier, PersistenceManager persistenceManager) {
-        this.carrier = carrier;
+        super(new FsmExecutor<>(Event.NEXT), carrier, persistenceManager);
         this.fsmFactory = new Factory(carrier, persistenceManager);
     }
 
@@ -53,10 +46,19 @@ public class FlowSwapEndpointsHubService {
      * Handles request for swap flow endpoints.
      */
     public void handleRequest(String key, CommandContext commandContext, SwapFlowEndpointRequest request) {
+        if (yFlowRepository.isSubFlow(request.getFirstFlow().getFlowId())) {
+            sendForbiddenSubFlowOperationToNorthbound(request.getFirstFlow().getFlowId(), commandContext);
+            return;
+        }
+        if (yFlowRepository.isSubFlow(request.getSecondFlow().getFlowId())) {
+            sendForbiddenSubFlowOperationToNorthbound(request.getSecondFlow().getFlowId(), commandContext);
+            return;
+        }
+
         log.debug("Handling swap flow endpoints request with key {} and flow IDs: {}, {}", key,
                 request.getFirstFlow().getFlowId(), request.getSecondFlow().getFlowId());
 
-        if (fsms.containsKey(key)) {
+        if (getFsmByKey(key).isPresent()) {
             log.error("Attempt to create a FSM with key {}, while there's another active FSM with the same key.", key);
             return;
         }
@@ -64,7 +66,7 @@ public class FlowSwapEndpointsHubService {
         RequestedFlow firstFlow = RequestedFlowMapper.INSTANCE.toRequestedFlow(request.getFirstFlow());
         RequestedFlow secondFlow = RequestedFlowMapper.INSTANCE.toRequestedFlow(request.getSecondFlow());
         FlowSwapEndpointsFsm fsm = fsmFactory.newInstance(commandContext, firstFlow, secondFlow);
-        fsms.put(key, fsm);
+        registerFsm(key, fsm);
         fsm.fire(Event.NEXT);
 
         removeIfFinished(fsm, key);
@@ -75,7 +77,7 @@ public class FlowSwapEndpointsHubService {
      */
     public void handleAsyncResponse(String key, Message message) {
         log.debug("Received response {}", message);
-        FlowSwapEndpointsFsm fsm = fsms.get(key);
+        FlowSwapEndpointsFsm fsm = getFsmByKey(key).orElse(null);
         if (fsm == null) {
             log.warn("Failed to find a FSM: received response with key {} for non pending FSM", key);
             return;
@@ -97,7 +99,7 @@ public class FlowSwapEndpointsHubService {
      */
     public void handleTaskTimeout(String key) {
         log.debug("Handling timeout for {}", key);
-        FlowSwapEndpointsFsm fsm = fsms.get(key);
+        FlowSwapEndpointsFsm fsm = getFsmByKey(key).orElse(null);
         if (fsm == null) {
             log.warn("Failed to find a FSM: timeout event for non pending FSM with key {}", key);
             return;
@@ -111,31 +113,13 @@ public class FlowSwapEndpointsHubService {
     private void removeIfFinished(FlowSwapEndpointsFsm fsm, String key) {
         if (fsm.isTerminated()) {
             log.debug("FSM with key {} is finished with state {}", key, fsm.getCurrentState());
-            fsms.remove(key);
+            unregisterFsm(key);
 
             carrier.cancelTimeoutCallback(key);
 
-            if (!active && fsms.isEmpty()) {
+            if (!isActive() && !hasAnyRegisteredFsm()) {
                 carrier.sendInactive();
             }
         }
-    }
-
-    /**
-     * Handles deactivate command.
-     */
-    public boolean deactivate() {
-        active = false;
-        if (fsms.isEmpty()) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Handles activate command.
-     */
-    public void activate() {
-        active = true;
     }
 }
