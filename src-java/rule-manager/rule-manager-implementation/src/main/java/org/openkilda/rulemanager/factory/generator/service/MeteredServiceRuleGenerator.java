@@ -26,7 +26,6 @@ import org.openkilda.rulemanager.MeterFlag;
 import org.openkilda.rulemanager.MeterSpeakerCommandData;
 import org.openkilda.rulemanager.OfVersion;
 import org.openkilda.rulemanager.RuleManagerConfig;
-import org.openkilda.rulemanager.SpeakerCommandData;
 import org.openkilda.rulemanager.factory.MeteredRuleGenerator;
 
 import lombok.AllArgsConstructor;
@@ -38,8 +37,11 @@ public abstract class MeteredServiceRuleGenerator extends MeteredRuleGenerator {
 
     protected RuleManagerConfig config;
 
-    protected SpeakerCommandData generateMeterCommandForServiceRule(Switch sw, MeterId meterId, long rateInPackets,
-                                                                    long burstSizeInPackets, long packetSizeInBytes) {
+    protected MeterSpeakerCommandData generateMeterCommandForServiceRule(Switch sw,
+                                                                         MeterId meterId,
+                                                                         long rateInPackets,
+                                                                         long burstSizeInPackets,
+                                                                         long packetSizeInBytes) {
         if (!sw.getFeatures().contains(METERS)) {
             return null;
         }

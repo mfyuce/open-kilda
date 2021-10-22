@@ -18,9 +18,13 @@ package org.openkilda.rulemanager.factory;
 import org.openkilda.model.cookie.Cookie;
 import org.openkilda.rulemanager.OfTable;
 import org.openkilda.rulemanager.RuleManagerConfig;
+import org.openkilda.rulemanager.factory.generator.service.BfdCatchRuleGenerator;
 import org.openkilda.rulemanager.factory.generator.service.BroadCastDiscoveryRuleGenerator;
+import org.openkilda.rulemanager.factory.generator.service.DropDiscoveryLoopRuleGenerator;
+import org.openkilda.rulemanager.factory.generator.service.RoundTripLatencyRuleGenerator;
 import org.openkilda.rulemanager.factory.generator.service.TableDefaultRuleGenerator;
 import org.openkilda.rulemanager.factory.generator.service.UniCastDiscoveryRuleGenerator;
+import org.openkilda.rulemanager.factory.generator.service.UnicastVerificationVxlanRuleGenerator;
 
 public class ServiceRulesGeneratorFactory {
 
@@ -58,5 +62,37 @@ public class ServiceRulesGeneratorFactory {
                 .build();
     }
 
+    /**
+     * Get drop discovery loop rule generator.
+     */
+    public RuleGenerator getDropDiscoveryLoopRuleGenerator() {
+        return DropDiscoveryLoopRuleGenerator.builder()
+                .config(config)
+                .build();
+    }
 
+    /**
+     * Get BFD catch rule generator.
+     */
+    public RuleGenerator getBfdCatchRuleGenerator() {
+        return new BfdCatchRuleGenerator();
+    }
+
+    /**
+     * Get round trip latency rule generator.
+     */
+    public RuleGenerator getRoundTripLatencyRuleGenerator() {
+        return RoundTripLatencyRuleGenerator.builder()
+                .config(config)
+                .build();
+    }
+
+    /**
+     * Get unicast verification VXLAN rule generator.
+     */
+    public RuleGenerator getUnicastVerificationVxlanRuleGenerator() {
+        return UnicastVerificationVxlanRuleGenerator.builder()
+                .config(config)
+                .build();
+    }
 }
