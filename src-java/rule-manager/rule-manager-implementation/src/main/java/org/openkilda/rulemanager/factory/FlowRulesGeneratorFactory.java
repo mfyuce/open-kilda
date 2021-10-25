@@ -24,6 +24,8 @@ import org.openkilda.model.FlowTransitEncapsulation;
 import org.openkilda.model.PathSegment;
 import org.openkilda.rulemanager.RuleManagerConfig;
 import org.openkilda.rulemanager.factory.generator.flow.EgressRuleGenerator;
+import org.openkilda.rulemanager.factory.generator.flow.InputArpRuleGenerator;
+import org.openkilda.rulemanager.factory.generator.flow.InputLldpRuleGenerator;
 import org.openkilda.rulemanager.factory.generator.flow.MultiTableIngressRuleGenerator;
 import org.openkilda.rulemanager.factory.generator.flow.SingleTableIngressRuleGenerator;
 import org.openkilda.rulemanager.factory.generator.flow.TransitRuleGenerator;
@@ -61,6 +63,30 @@ public class FlowRulesGeneratorFactory {
                     .encapsulation(encapsulation)
                     .build();
         }
+    }
+
+    /**
+     * Get input LLDP rule generator.
+     */
+    public RuleGenerator getInputLldpRuleGenerator(
+            FlowPath flowPath, Flow flow, Set<FlowSideAdapter> overlappingIngressAdapters) {
+        return InputLldpRuleGenerator.builder()
+                .ingressEndpoint(FlowSideAdapter.makeIngressAdapter(flow, flowPath).getEndpoint())
+                .multiTable(isPathSrcMultiTable(flowPath, flow))
+                .overlappingIngressAdapters(overlappingIngressAdapters)
+                .build();
+    }
+
+    /**
+     * Get input ARP rule generator.
+     */
+    public RuleGenerator getInputArpRuleGenerator(
+            FlowPath flowPath, Flow flow, Set<FlowSideAdapter> overlappingIngressAdapters) {
+        return InputArpRuleGenerator.builder()
+                .ingressEndpoint(FlowSideAdapter.makeIngressAdapter(flow, flowPath).getEndpoint())
+                .multiTable(isPathSrcMultiTable(flowPath, flow))
+                .overlappingIngressAdapters(overlappingIngressAdapters)
+                .build();
     }
 
     /**
