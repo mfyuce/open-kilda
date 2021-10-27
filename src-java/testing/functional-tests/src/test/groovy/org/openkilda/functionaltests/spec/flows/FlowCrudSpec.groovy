@@ -80,7 +80,7 @@ class FlowCrudSpec extends HealthCheckSpecification {
             @IterationTag(tags = [LOW_PRIORITY], iterationNameRegex = /and vlan only on/)
     ])
     @Unroll("Valid #data.description has traffic and no rule discrepancies \
-(#flow.source.switchId - #flow.destination.switchId)")
+(#flow.source.switchId.id - #flow.destination.switchId.id)")
     def "Valid flow has no rule discrepancies"() {
         given: "A flow"
         assumeTrue(topology.activeTraffGens.size() >= 2,
@@ -336,7 +336,7 @@ class FlowCrudSpec extends HealthCheckSpecification {
 
     @Tidy
     @Tags([TOPOLOGY_DEPENDENT, SMOKE_SWITCHES])
-    def "Able to create single switch single port flow with different vlan (#flow.source.switchId)"(
+    def "Able to create single switch single port flow with different vlan (#flow.source.switchId.id)"(
             FlowRequestV2 flow) {
         given: "A flow"
         flowHelperV2.addFlow(flow)

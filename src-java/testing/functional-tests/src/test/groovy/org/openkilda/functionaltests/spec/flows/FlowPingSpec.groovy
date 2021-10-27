@@ -48,7 +48,7 @@ class FlowPingSpec extends HealthCheckSpecification {
     int pingInterval
 
     @Tidy
-    @Unroll("Able to ping a flow with vlan between switches #srcSwitch.dpId - #dstSwitch.dpId")
+    @Unroll("Able to ping a flow with vlan between switches #srcSwitch.dpId.id - #dstSwitch.dpId.id")
     @Tags([TOPOLOGY_DEPENDENT])
     def "Able to ping a flow with vlan"(Switch srcSwitch, Switch dstSwitch) {
         given: "A flow with random vlan"
@@ -94,7 +94,7 @@ class FlowPingSpec extends HealthCheckSpecification {
     }
 
     @Tidy
-    @Unroll("Able to ping a flow with no vlan between switches #srcSwitch.dpId - #dstSwitch.dpId")
+    @Unroll("Able to ping a flow with no vlan between switches #srcSwitch.dpId.id - #dstSwitch.dpId.id")
     @Tags([TOPOLOGY_DEPENDENT])
     def "Able to ping a flow with no vlan"(Switch srcSwitch, Switch dstSwitch) {
         given: "A flow with no vlan"
