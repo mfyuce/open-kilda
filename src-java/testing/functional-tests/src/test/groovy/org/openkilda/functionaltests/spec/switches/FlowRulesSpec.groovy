@@ -93,7 +93,7 @@ class FlowRulesSpec extends HealthCheckSpecification {
         Wrappers.wait(RULES_INSTALLATION_TIME) {
             defaultPlusFlowRules = northbound.getSwitchRules(srcSwitch.dpId).flowEntries
             def multiTableFlowRules = 0
-            if (northbound.getSwitchProperties(srcSwitch.dpId).multiTable) {
+            if (switchHelper.getCachedSwProps(srcSwitch.dpId).multiTable) {
                 multiTableFlowRules = multiTableFlowRulesCount + sharedRulesCount
             }
             assert defaultPlusFlowRules.size() == srcSwDefaultRules.size() + flowRulesCount + multiTableFlowRules
@@ -318,7 +318,7 @@ class FlowRulesSpec extends HealthCheckSpecification {
         def flow = flowHelperV2.randomFlow(srcSwitch, dstSwitch)
         flowHelperV2.addFlow(flow)
 
-        if (northbound.getSwitchProperties(srcSwitch.dpId).multiTable ) {
+        if (switchHelper.getCachedSwProps(srcSwitch.dpId).multiTable) {
             def ingressRule = (northbound.getSwitchRules(srcSwitch.dpId).flowEntries - data.defaultRules).find {
                 new Cookie(it.cookie).serviceFlag
             }
@@ -496,7 +496,7 @@ class FlowRulesSpec extends HealthCheckSpecification {
         }
 
         def amountOfRulesMap = involvedSwitches.collectEntries { switchId ->
-            def swProps = northbound.getSwitchProperties(switchId)
+            def swProps = switchHelper.getCachedSwProps(switchId)
             def switchIdInSrcOrDst = (switchId in [switchPair.src.dpId, switchPair.dst.dpId])
             def defaultAmountOfFlowRules = 2 // ingress + egress
             def amountOfServer42Rules = (switchIdInSrcOrDst && swProps.server42FlowRtt ? 1 : 0)
@@ -875,7 +875,7 @@ class FlowRulesSpec extends HealthCheckSpecification {
         }
 
         def rulesCountMap = involvedSwitches.collectEntries { switchId ->
-            def swProps = northbound.getSwitchProperties(switchId)
+            def swProps = switchHelper.getCachedSwProps(switchId)
             def switchIdInSrcOrDst = (switchId in [switchPair.src.dpId, switchPair.dst.dpId])
             def defaultAmountOfFlowRules = 2 // ingress + egress
             def amountOfServer42Rules = (switchIdInSrcOrDst && swProps.server42FlowRtt ? 1 : 0)

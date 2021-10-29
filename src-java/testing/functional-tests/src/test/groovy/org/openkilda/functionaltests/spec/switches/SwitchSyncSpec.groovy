@@ -111,7 +111,7 @@ class SwitchSyncSpec extends BaseSpecification {
                 assert validationResultsMap[it.dpId].meters.missing.meterId.sort() == it.defaultMeters.sort()
             }
             [switchPair.src, switchPair.dst].each {
-                def swProps = northbound.getSwitchProperties(it.dpId)
+                def swProps = switchHelper.getCachedSwProps(it.dpId)
                 def amountOfSharedRules = (swProps.multiTable ? 1 : 0) + (swProps.server42FlowRtt ? 1 : 0)
                 assert validationResultsMap[it.dpId].rules.missing.size() == 2 + it.defaultCookies.size() + amountOfSharedRules
                 assert validationResultsMap[it.dpId].rules.missingHex.size() == 2 + it.defaultCookies.size() + amountOfSharedRules
@@ -278,7 +278,7 @@ class SwitchSyncSpec extends BaseSpecification {
         Wrappers.wait(RULES_DELETION_TIME) {
             def validationResultsMap = involvedSwitches.collectEntries { [it.dpId, northbound.validateSwitch(it.dpId)] }
             involvedSwitches.each {
-                def swProps = northbound.getSwitchProperties(it.dpId)
+                def swProps = switchHelper.getCachedSwProps(it.dpId)
                 def switchIdInSrcOrDst = (it.dpId in [switchPair.src.dpId, switchPair.dst.dpId])
                 def defaultAmountOfFlowRules = 2 // ingress + egress
                 def amountOfServer42Rules = (switchIdInSrcOrDst && swProps.server42FlowRtt ? 1 : 0)

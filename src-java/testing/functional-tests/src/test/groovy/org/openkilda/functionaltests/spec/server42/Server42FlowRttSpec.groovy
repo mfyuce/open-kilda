@@ -175,7 +175,7 @@ class Server42FlowRttSpec extends HealthCheckSpecification {
                  * (if there are 10 flows on port number 5, then there will be installed one INPUT rule);
                  * - SERVER_42_FLOW_RTT_INGRESS is installed for each flow.
                  */
-                def amountOfRules = northbound.getSwitchProperties(it.dpId).multiTable ? 4 : 2
+                def amountOfRules = switchHelper.getCachedSwProps(it.dpId).multiTable ? 4 : 2
                 assert northbound.getSwitchRules(it.dpId).flowEntries.findAll {
                     new Cookie(it.cookie).getType() in  [CookieType.SERVER_42_FLOW_RTT_INPUT,
                                                          CookieType.SERVER_42_FLOW_RTT_INGRESS]
@@ -655,7 +655,7 @@ class Server42FlowRttSpec extends HealthCheckSpecification {
         def flowRttFeatureStartState = changeFlowRttToggle(true)
 
         and: "server42FlowRtt is enabled on src switch"
-        def initialSrcSwS42Props = northbound.getSwitchProperties(switchPair.src.dpId).server42FlowRtt
+        def initialSrcSwS42Props = switchHelper.getCachedSwProps(switchPair.src.dpId).server42FlowRtt
         changeFlowRttSwitch(switchPair.src, true)
 
         and: "Create a flow"
@@ -814,7 +814,7 @@ class Server42FlowRttSpec extends HealthCheckSpecification {
         def newS42Port = topology.getAllowedPortsForSwitch(topology.activeSwitches.find {
             it.dpId == switchPair.src.dpId
         }).last()
-        def originalSrcSwPros = northbound.getSwitchProperties(switchPair.src.dpId)
+        def originalSrcSwPros = switchHelper.getCachedSwProps(switchPair.src.dpId)
         northbound.updateSwitchProperties(switchPair.src.dpId, originalSrcSwPros.jacksonCopy().tap {
             server42Port = newS42Port
         })
@@ -913,8 +913,8 @@ class Server42FlowRttSpec extends HealthCheckSpecification {
         def flowRttFeatureStartState = changeFlowRttToggle(true)
 
         and: "server42FlowRtt is enabled on src/dst switches"
-        def initialSrcSwS42Props = northbound.getSwitchProperties(switchPair.src.dpId).server42FlowRtt
-        def initialDstSwS42Props = northbound.getSwitchProperties(switchPair.dst.dpId).server42FlowRtt
+        def initialSrcSwS42Props = switchHelper.getCachedSwProps(switchPair.src.dpId).server42FlowRtt
+        def initialDstSwS42Props = switchHelper.getCachedSwProps(switchPair.dst.dpId).server42FlowRtt
         changeFlowRttSwitch(switchPair.src, true)
         changeFlowRttSwitch(switchPair.dst, true)
 
@@ -951,7 +951,7 @@ class Server42FlowRttSpec extends HealthCheckSpecification {
     }
 
     def changeFlowRttSwitch(Switch sw, boolean requiredState) {
-        def originalProps = northbound.getSwitchProperties(sw.dpId)
+        def originalProps = switchHelper.getCachedSwProps(sw.dpId)
         if (originalProps.server42FlowRtt != requiredState) {
             def s42Config = sw.prop
             northbound.updateSwitchProperties(sw.dpId, originalProps.jacksonCopy().tap {

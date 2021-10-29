@@ -584,7 +584,7 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
         assumeTrue(topology.activeTraffGens.size() > 0, "Require at least 1 switch with connected traffgen")
         def sw = topology.activeTraffGens[0].switchConnected
         def initialProps = enableMultiTableIfNeeded(true, sw.dpId)
-        def swProps = northbound.getSwitchProperties(sw.dpId)
+        def swProps = switchHelper.getCachedSwProps(sw.dpId)
         assert !swProps.switchLldp
         assert !swProps.switchArp
 
@@ -652,8 +652,8 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
         assumeTrue(topology.activeTraffGens.size() > 0, "Require at least 1 switch with connected traffgen")
         def tg = topology.activeTraffGens[0]
         def sw = tg.switchConnected
-        def initialProps = northbound.getSwitchProperties(sw.dpId)
-        switchHelper.updateSwitchProperties(sw, northbound.getSwitchProperties(sw.dpId).tap {
+        def initialProps = switchHelper.getCachedSwProps(sw.dpId)
+        switchHelper.updateSwitchProperties(sw, switchHelper.getCachedSwProps(sw.dpId).tap {
             it.multiTable = true
             it.switchLldp = true
             it.switchArp = true
@@ -709,8 +709,8 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
         assumeTrue(topology.activeTraffGens.size() > 0, "Require at least 1 switch with connected traffgen")
         def tg = topology.activeTraffGens[0]
         def sw = tg.switchConnected
-        def initialProps = northbound.getSwitchProperties(sw.dpId)
-        switchHelper.updateSwitchProperties(sw, northbound.getSwitchProperties(sw.dpId).tap {
+        def initialProps = switchHelper.getCachedSwProps(sw.dpId)
+        switchHelper.updateSwitchProperties(sw, switchHelper.getCachedSwProps(sw.dpId).tap {
             it.multiTable = true
             it.switchLldp = true
             it.switchArp = true
@@ -747,8 +747,8 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
         assumeTrue(topology.activeTraffGens.size() > 0, "Require at least 1 switch with connected traffgen")
         def tg = topology.activeTraffGens[0]
         def sw = tg.switchConnected
-        def initialProps = northbound.getSwitchProperties(sw.dpId)
-        switchHelper.updateSwitchProperties(sw, northbound.getSwitchProperties(sw.dpId).tap {
+        def initialProps = switchHelper.getCachedSwProps(sw.dpId)
+        switchHelper.updateSwitchProperties(sw, switchHelper.getCachedSwProps(sw.dpId).tap {
             it.multiTable = true
             it.switchLldp = true
             it.switchArp = true
