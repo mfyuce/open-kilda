@@ -42,6 +42,7 @@ public abstract class FlowPathSwappingFsm<T extends NbTrackableFsm<T, S, E, C>, 
         extends NbTrackableFsm<T, S, E, C> {
 
     protected final String flowId;
+    protected String sharedBandwidthGroupId;
 
     protected FlowResources newPrimaryResources;
     protected FlowResources newProtectedResources;

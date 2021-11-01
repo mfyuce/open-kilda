@@ -86,6 +86,7 @@ public class FlowRerouteService {
         }
 
         FlowRerouteFsm fsm = fsmFactory.newInstance(commandContext, flowId);
+        fsm.setSharedBandwidthGroupId(flowId);
         fsms.put(key, fsm);
 
         FlowRerouteContext context = FlowRerouteContext.builder()

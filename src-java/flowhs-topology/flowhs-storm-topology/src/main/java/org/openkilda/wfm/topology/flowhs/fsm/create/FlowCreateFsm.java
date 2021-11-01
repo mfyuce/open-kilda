@@ -84,6 +84,7 @@ public final class FlowCreateFsm extends NbTrackableFsm<FlowCreateFsm, State, Ev
     private final FlowCreateHubCarrier carrier;
 
     private RequestedFlow targetFlow;
+    private String sharedBandwidthGroupId;
     private final String flowId;
     private List<FlowResources> flowResources = new ArrayList<>();
     private PathId forwardPathId;

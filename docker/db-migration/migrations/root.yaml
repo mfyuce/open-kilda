@@ -60,3 +60,6 @@ databaseChangeLog:
   - include:
       relativeToChangelogFile: true
       file: 016-remove-flow-latency-properties.yaml
+  - include:
+      relativeToChangelogFile: true
+      file: 017-add-shared-bandwidth-group-properties.yaml

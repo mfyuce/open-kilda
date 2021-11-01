@@ -186,6 +186,7 @@ public class FlowUpdateService {
         }
 
         FlowUpdateFsm fsm = fsmFactory.newInstance(commandContext, request.getFlowId());
+        fsm.setSharedBandwidthGroupId(request.getFlowId());
         fsms.put(key, fsm);
 
         RequestedFlow requestedFlow = RequestedFlowMapper.INSTANCE.toRequestedFlow(request);

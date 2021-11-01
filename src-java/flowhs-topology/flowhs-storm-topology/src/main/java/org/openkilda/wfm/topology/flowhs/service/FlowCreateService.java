@@ -97,11 +97,14 @@ public class FlowCreateService {
             requestedFlow.setPathComputationStrategy(
                     kildaConfigurationRepository.getOrDefault().getPathComputationStrategy());
         }
+
+        fsm.setTargetFlow(requestedFlow);
+        fsm.setSharedBandwidthGroupId(request.getFlowId());
+        fsm.start();
+
         FlowCreateContext context = FlowCreateContext.builder()
                 .targetFlow(requestedFlow)
                 .build();
-        fsm.setTargetFlow(requestedFlow);
-        fsm.start();
         processNext(fsm, context);
         removeIfFinished(fsm, key);
     }
