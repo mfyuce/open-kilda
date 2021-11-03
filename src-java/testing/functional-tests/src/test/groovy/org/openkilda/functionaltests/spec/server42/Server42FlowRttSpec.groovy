@@ -175,7 +175,7 @@ class Server42FlowRttSpec extends HealthCheckSpecification {
                  * (if there are 10 flows on port number 5, then there will be installed one INPUT rule);
                  * - SERVER_42_FLOW_RTT_INGRESS is installed for each flow.
                  */
-                def amountOfRules = switchHelper.getCachedSwProps(it.dpId).multiTable ? 4 : 2
+                def amountOfRules = northbound.getSwitchProperties(it.dpId).multiTable ? 4 : 2
                 assert northbound.getSwitchRules(it.dpId).flowEntries.findAll {
                     new Cookie(it.cookie).getType() in  [CookieType.SERVER_42_FLOW_RTT_INPUT,
                                                          CookieType.SERVER_42_FLOW_RTT_INGRESS]
@@ -951,7 +951,7 @@ class Server42FlowRttSpec extends HealthCheckSpecification {
     }
 
     def changeFlowRttSwitch(Switch sw, boolean requiredState) {
-        def originalProps = switchHelper.getCachedSwProps(sw.dpId)
+        def originalProps = northbound.getSwitchProperties(sw.dpId)
         if (originalProps.server42FlowRtt != requiredState) {
             def s42Config = sw.prop
             northbound.updateSwitchProperties(sw.dpId, originalProps.jacksonCopy().tap {
