@@ -584,7 +584,7 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
         assumeTrue(topology.activeTraffGens.size() > 0, "Require at least 1 switch with connected traffgen")
         def sw = topology.activeTraffGens[0].switchConnected
         def initialProps = enableMultiTableIfNeeded(true, sw.dpId)
-        def swProps = switchHelper.getCachedSwProps(sw.dpId)
+        def swProps = northbound.getSwitchProperties(sw.dpId)
         assert !swProps.switchLldp
         assert !swProps.switchArp
 
@@ -653,7 +653,7 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
         def tg = topology.activeTraffGens[0]
         def sw = tg.switchConnected
         def initialProps = switchHelper.getCachedSwProps(sw.dpId)
-        switchHelper.updateSwitchProperties(sw, switchHelper.getCachedSwProps(sw.dpId).tap {
+        switchHelper.updateSwitchProperties(sw, initialProps.jacksonCopy().tap {
             it.multiTable = true
             it.switchLldp = true
             it.switchArp = true
@@ -710,7 +710,7 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
         def tg = topology.activeTraffGens[0]
         def sw = tg.switchConnected
         def initialProps = switchHelper.getCachedSwProps(sw.dpId)
-        switchHelper.updateSwitchProperties(sw, switchHelper.getCachedSwProps(sw.dpId).tap {
+        switchHelper.updateSwitchProperties(sw, initialProps.jacksonCopy().tap {
             it.multiTable = true
             it.switchLldp = true
             it.switchArp = true
@@ -748,7 +748,7 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
         def tg = topology.activeTraffGens[0]
         def sw = tg.switchConnected
         def initialProps = switchHelper.getCachedSwProps(sw.dpId)
-        switchHelper.updateSwitchProperties(sw, switchHelper.getCachedSwProps(sw.dpId).tap {
+        switchHelper.updateSwitchProperties(sw, initialProps.jacksonCopy().tap {
             it.multiTable = true
             it.switchLldp = true
             it.switchArp = true
@@ -995,8 +995,8 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
     def "System forbids to turn on '#propertyToTurnOn' on a single-table-mode switch"() {
         when: "Try to change switch props so that connected devices are 'on' but switch is in a single-table mode"
         def sw = topology.activeSwitches.first()
-        def initSwitchProperties = northbound.getSwitchProperties(sw.dpId)
-        northbound.updateSwitchProperties(sw.dpId, northbound.getSwitchProperties(sw.dpId).tap {
+        def initSwitchProperties = switchHelper.getCachedSwProps(sw.dpId)
+        switchHelper.updateSwitchProperties(sw, initSwitchProperties.jacksonCopy().tap {
             it.multiTable = false
             it."$propertyToTurnOn" = true
         })
@@ -1019,8 +1019,8 @@ srcDevices=#newSrcEnabled, dstDevices=#newDstEnabled"() {
         given: "Switch in single-table mode"
         def swPair = topologyHelper.switchPairs.first()
         def sw = swPair.src
-        def initProps = northbound.getSwitchProperties(sw.dpId)
-        SwitchHelper.updateSwitchProperties(sw, initProps.jacksonCopy().tap {
+        def initProps = switchHelper.getCachedSwProps(sw.dpId)
+        switchHelper.updateSwitchProperties(sw, initProps.jacksonCopy().tap {
             it.multiTable = false
         })
 
