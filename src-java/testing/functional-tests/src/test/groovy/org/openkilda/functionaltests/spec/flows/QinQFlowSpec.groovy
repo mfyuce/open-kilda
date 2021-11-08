@@ -110,9 +110,9 @@ class QinQFlowSpec extends HealthCheckSpecification {
         )
         involvedSwitchesFlow1.each {sw ->
             with(northbound.validateSwitch(sw.dpId)) { validation ->
-                validation.verifyRuleSectionsAreEmpty(sw.dpId, ["missing", "excess", "misconfigured"])
-                validation.verifyHexRuleSectionsAreEmpty(sw.dpId, ["missingHex", "excessHex", "misconfiguredHex"])
-                validation.verifyMeterSectionsAreEmpty(sw.dpId, ["missing", "excess", "misconfigured"])
+                validation.verifyRuleSectionsAreEmpty(["missing", "excess", "misconfigured"])
+                validation.verifyHexRuleSectionsAreEmpty(["missingHex", "excessHex", "misconfiguredHex"])
+                validation.verifyMeterSectionsAreEmpty(["missing", "excess", "misconfigured"])
             }
         }
 
@@ -135,8 +135,8 @@ class QinQFlowSpec extends HealthCheckSpecification {
         def involvedSwitchesforBothFlows = (involvedSwitchesFlow1 + involvedSwitchesFlow2).unique { it.dpId }
         involvedSwitchesforBothFlows.each { sw ->
             with(northbound.validateSwitch(sw.dpId)) { validation ->
-                validation.verifyRuleSectionsAreEmpty(sw.dpId, ["missing", "excess", "misconfigured"])
-                validation.verifyMeterSectionsAreEmpty(sw.dpId, ["missing", "excess", "misconfigured"])
+                validation.verifyRuleSectionsAreEmpty(["missing", "excess", "misconfigured"])
+                validation.verifyMeterSectionsAreEmpty(["missing", "excess", "misconfigured"])
             }
         }
 
@@ -284,8 +284,8 @@ class QinQFlowSpec extends HealthCheckSpecification {
 
         and: "Involved switches pass switch validation"
         def validationInfo = northbound.validateSwitch(swPair.src.dpId)
-        validationInfo.verifyRuleSectionsAreEmpty(swPair.src.dpId, ["missing", "excess", "misconfigured"])
-        validationInfo.verifyMeterSectionsAreEmpty(swPair.src.dpId, ["missing", "excess", "misconfigured"])
+        validationInfo.verifyRuleSectionsAreEmpty(["missing", "excess", "misconfigured"])
+        validationInfo.verifyMeterSectionsAreEmpty(["missing", "excess", "misconfigured"])
 
         and: "Traffic examination is successful (if possible)"
         if(!trafficDisclaimer) {
@@ -662,8 +662,8 @@ class QinQFlowSpec extends HealthCheckSpecification {
         and: "Involved switches pass switch validation"
         pathHelper.getInvolvedSwitches(pathHelper.convert(northbound.getFlowPath(qinqFlow.flowId))).each {
             def validationInfo = northbound.validateSwitch(it.dpId)
-            validationInfo.verifyRuleSectionsAreEmpty(it.dpId, ["missing", "excess", "misconfigured"])
-            validationInfo.verifyMeterSectionsAreEmpty(it.dpId, ["missing", "excess", "misconfigured"])
+            validationInfo.verifyRuleSectionsAreEmpty(["missing", "excess", "misconfigured"])
+            validationInfo.verifyMeterSectionsAreEmpty(["missing", "excess", "misconfigured"])
         }
 
         when: "Delete the flow"
@@ -750,8 +750,8 @@ class QinQFlowSpec extends HealthCheckSpecification {
         )
         involvedSwitchesFlow1.each {sw ->
             with(northbound.validateSwitch(sw.dpId)) { validation ->
-                validation.verifyRuleSectionsAreEmpty(sw.dpId, ["missing", "excess", "misconfigured"])
-                validation.verifyMeterSectionsAreEmpty(sw.dpId, ["missing", "excess", "misconfigured"])
+                validation.verifyRuleSectionsAreEmpty(["missing", "excess", "misconfigured"])
+                validation.verifyMeterSectionsAreEmpty(["missing", "excess", "misconfigured"])
             }
         }
 
@@ -774,8 +774,8 @@ class QinQFlowSpec extends HealthCheckSpecification {
         def involvedSwitchesforBothFlows = (involvedSwitchesFlow1 + involvedSwitchesFlow2).unique { it.dpId }
         involvedSwitchesforBothFlows.each { sw ->
             with(northbound.validateSwitch(sw.dpId)) { validation ->
-                validation.verifyRuleSectionsAreEmpty(sw.dpId, ["missing", "excess", "misconfigured"])
-                validation.verifyMeterSectionsAreEmpty(sw.dpId, ["missing", "excess", "misconfigured"])
+                validation.verifyRuleSectionsAreEmpty(["missing", "excess", "misconfigured"])
+                validation.verifyMeterSectionsAreEmpty(["missing", "excess", "misconfigured"])
             }
         }
 
@@ -905,8 +905,8 @@ class QinQFlowSpec extends HealthCheckSpecification {
 
         then: "Missing rules are reinstalled"
         def validateSwResponse = northbound.validateSwitch(swP.src.dpId)
-        validateSwResponse.verifyRuleSectionsAreEmpty(swP.src.dpId, ["missing", "excess", "misconfigured"])
-        validateSwResponse.verifyHexRuleSectionsAreEmpty(swP.src.dpId, ["missingHex", "excessHex", "misconfiguredHex"])
+        validateSwResponse.verifyRuleSectionsAreEmpty(["missing", "excess", "misconfigured"])
+        validateSwResponse.verifyHexRuleSectionsAreEmpty(["missingHex", "excessHex", "misconfiguredHex"])
 
         and: "Flow is valid"
         northbound.validateFlow(flow.flowId).each { assert it.asExpected }
@@ -983,19 +983,15 @@ class QinQFlowSpec extends HealthCheckSpecification {
         withPool {
             currentPath*.switchId.eachParallel { SwitchId swId ->
                 with(northbound.validateSwitch(swId)) { validation ->
-                    validation.verifyRuleSectionsAreEmpty(swId, ["missing", "excess", "misconfigured"])
-                    validation.verifyMeterSectionsAreEmpty(swId, ["missing", "excess", "misconfigured"])
+                    validation.verifyRuleSectionsAreEmpty(["missing", "excess", "misconfigured"])
+                    validation.verifyMeterSectionsAreEmpty(["missing", "excess", "misconfigured"])
                 }
             }
         }
-        def involvedSwitchesPassSwValidation = true
 
         cleanup: "Revert system to original state"
         flow && flowHelperV2.deleteFlow(flow.flowId)
         northbound.deleteLinkProps(northbound.getLinkProps(topology.isls))
-        !involvedSwitchesPassSwValidation && currentPath*.switchId.each { SwitchId swId ->
-            northbound.synchronizeSwitch(swId, true)
-        }
     }
 
     @Tidy
