@@ -156,10 +156,34 @@ class AutoRerouteSpec extends HealthCheckSpecification {
         errorDetails.errorDescription.contains("Not enough bandwidth or no path found")
 
         and: "Flow remains DEGRADED and on the same path"
-        wait(rerouteDelay + WAIT_OFFSET) { //2 more reroute attempts (reroute + retry)
-            assert northbound.getFlowHistory(flow.flowId).size() == history.size() + 2
+        wait(rerouteDelay + WAIT_OFFSET) {
+            assert northbound.getFlowHistory(flow.flowId).findAll {
+                it.action == REROUTE_ACTION && it.details == "Reason: initiated via Northbound"
+            }.size() == 2 //reroute + retry
             assert northboundV2.getFlowStatus(flow.flowId).status == FlowState.DEGRADED
         }
+        PathHelper.convert(northbound.getFlowPath(flow.flowId)) == pathAfterReroute1
+        pathHelper.getInvolvedIsls(pathAfterReroute1).each {
+            assert northbound.getLink(it).availableBandwidth == flow.maximumBandwidth - 1 }
+
+        when: "Trigger auto reroute by blinking not involved(in flow path) isl"
+        def islToBlink = topology.islsForActiveSwitches.find {
+            [it.srcSwitch.dpId, it.dstSwitch.dpId].intersect([flow.source.switchId, flow.destination.switchId]).empty
+        }
+        antiflap.portDown(islToBlink.srcSwitch.dpId, islToBlink.srcPort)
+        def islToBlinkIsDown = true
+        antiflap.portUp(islToBlink.srcSwitch.dpId, islToBlink.srcPort)
+        islToBlinkIsDown = false
+
+        then: "System tries to reroute the DEGRADED flow"
+        and: "Flow remains DEGRADED and on the same path"
+        wait(rerouteDelay + WAIT_OFFSET) {
+            assert northbound.getFlowHistory(flow.flowId).findAll {
+                it.action == REROUTE_ACTION && it.details.contains("status become ACTIVE")
+            }.size() == 2 //reroute + retry
+            assert northboundV2.getFlowStatus(flow.flowId).status == FlowState.DEGRADED
+        }
+
         PathHelper.convert(northbound.getFlowPath(flow.flowId)) == pathAfterReroute1
         pathHelper.getInvolvedIsls(pathAfterReroute1).each {
             assert northbound.getLink(it).availableBandwidth == flow.maximumBandwidth - 1 }
@@ -175,11 +199,11 @@ class AutoRerouteSpec extends HealthCheckSpecification {
         cleanup:
         flow && flowHelperV2.deleteFlow(flow.flowId)
         helperFlows && helperFlows.each { it && flowHelperV2.deleteFlow(it.flowId) }
-        if (portDown && !portUp) {
-            antiflap.portUp(islToFail.srcSwitch.dpId, islToFail.srcPort)
-            wait(discoveryInterval + WAIT_OFFSET) {
-                assert islUtils.getIslInfo(islToFail).get().state == IslChangeType.DISCOVERED
-            }
+        (portDown && !portUp) && antiflap.portUp(islToFail.srcSwitch.dpId, islToFail.srcPort)
+        islToBlinkIsDown && antiflap.portUp(islToBlink.srcSwitch.dpId, islToBlink.srcPort)
+        wait(discoveryInterval + WAIT_OFFSET) {
+            assert islUtils.getIslInfo(islToFail).get().state == IslChangeType.DISCOVERED
+            assert islUtils.getIslInfo(islToBlink).get().state == IslChangeType.DISCOVERED
         }
     }
 
