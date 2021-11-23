@@ -28,6 +28,7 @@ import org.openkilda.wfm.topology.flowhs.service.FlowCreateService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @Slf4j
 public class CreateSubFlowsAction extends HistoryRecordingAction<YFlowCreateFsm, State, Event, YFlowCreateContext> {
@@ -42,11 +43,13 @@ public class CreateSubFlowsAction extends HistoryRecordingAction<YFlowCreateFsm,
         String yFlowId = stateMachine.getYFlowId();
         Collection<RequestedFlow> requestedFlows =
                 YFlowRequestMapper.INSTANCE.toRequestedFlows(stateMachine.getTargetFlow());
+        stateMachine.setRequestedFlows(requestedFlows);
         log.debug("Start creating {} sub-flows for y-flow {}", requestedFlows.size(), yFlowId);
         stateMachine.clearCreatingSubFlows();
 
-        requestedFlows.forEach(requestedFlow -> {
+        Optional.ofNullable(requestedFlows.iterator().next()).ifPresent(requestedFlow -> {
             String subFlowId = requestedFlow.getFlowId();
+            stateMachine.setMainAffinityFlowId(subFlowId);
             stateMachine.addSubFlow(subFlowId);
             stateMachine.addCreatingSubFlow(subFlowId);
             stateMachine.notifyEventListeners(listener -> listener.onSubFlowProcessingStart(yFlowId, subFlowId));

@@ -103,6 +103,7 @@ public class YFlowUpdateServiceTest extends AbstractYFlowTest {
 
         verifyNorthboundSuccessResponse(yFlowUpdateHubCarrier, YFlowResponse.class);
         verifyYFlowStatus(request.getYFlowId(), FlowStatus.UP);
+        verifyAffinity(request.getYFlowId());
         YFlow flow = getYFlow(request.getYFlowId());
         assertEquals(2000L, flow.getMaximumBandwidth());
         Set<SwitchId> expectedEndpointSwitchIds = Stream.of(SWITCH_NEW_FIRST_EP, SWITCH_NEW_SECOND_EP)
@@ -136,6 +137,7 @@ public class YFlowUpdateServiceTest extends AbstractYFlowTest {
 
         verifyNorthboundSuccessResponse(yFlowUpdateHubCarrier, YFlowResponse.class);
         verifyYFlowStatus(request.getYFlowId(), FlowStatus.UP);
+        verifyAffinity(request.getYFlowId());
         YFlow flow = getYFlow(request.getYFlowId());
         assertEquals(2000L, flow.getMaximumBandwidth());
         Set<SwitchId> expectedEndpointSwitchIds = Stream.of(SWITCH_NEW_FIRST_EP, SWITCH_NEW_SECOND_EP)
@@ -147,7 +149,7 @@ public class YFlowUpdateServiceTest extends AbstractYFlowTest {
     }
 
     @Test
-    public void shouldFailIfNoPathAvailable()
+    public void shouldFailIfNoPathAvailableForFirstSubFlow()
             throws UnroutableFlowException, RecoverableException, DuplicateKeyException {
         // given
         YFlowRequest request = createYFlow();
@@ -158,6 +160,37 @@ public class YFlowUpdateServiceTest extends AbstractYFlowTest {
         when(pathComputer.getPath(buildFlowIdArgumentMatch("test_flow_1"), any()))
                 .thenThrow(new UnroutableFlowException(injectedErrorMessage));
         preparePathComputationForUpdate("test_flow_2", buildNewSecondSubFlowPathPair(), buildSecondSubFlowPathPair());
+        prepareYPointComputation(SWITCH_SHARED, SWITCH_NEW_FIRST_EP, SWITCH_NEW_SECOND_EP, SWITCH_TRANSIT);
+
+        // when
+        processUpdateRequest(request);
+
+        verifyNorthboundErrorResponse(yFlowUpdateHubCarrier, ErrorType.NOT_FOUND);
+        verifyNoSpeakerInteraction(yFlowUpdateHubCarrier);
+        verifyYFlowStatus(request.getYFlowId(), FlowStatus.UP);
+
+        YFlow flow = getYFlow(request.getYFlowId());
+        assertEquals(1000L, flow.getMaximumBandwidth());
+        Set<SwitchId> expectedEndpointSwitchIds = Stream.of(SWITCH_FIRST_EP, SWITCH_SECOND_EP)
+                .collect(Collectors.toSet());
+        Set<SwitchId> actualEndpointSwitchIds = flow.getSubFlows().stream()
+                .map(YSubFlow::getEndpointSwitchId)
+                .collect(Collectors.toSet());
+        assertEquals(expectedEndpointSwitchIds, actualEndpointSwitchIds);
+    }
+
+    @Test
+    public void shouldFailIfNoPathAvailableForSecondSubFlow()
+            throws UnroutableFlowException, RecoverableException, DuplicateKeyException {
+        // given
+        YFlowRequest request = createYFlow();
+        request.setMaximumBandwidth(2000L);
+        request.getSubFlows().get(0).setEndpoint(newFirstEndpoint);
+        request.getSubFlows().get(1).setEndpoint(newSecondEndpoint);
+
+        preparePathComputationForUpdate("test_flow_1", buildNewFirstSubFlowPathPair(), buildFirstSubFlowPathPair());
+        when(pathComputer.getPath(buildFlowIdArgumentMatch("test_flow_2"), any()))
+                .thenThrow(new UnroutableFlowException(injectedErrorMessage));
         prepareYPointComputation(SWITCH_SHARED, SWITCH_NEW_FIRST_EP, SWITCH_NEW_SECOND_EP, SWITCH_TRANSIT);
 
         // when
@@ -301,7 +334,7 @@ public class YFlowUpdateServiceTest extends AbstractYFlowTest {
 
         verifyNorthboundSuccessResponse(yFlowCreateHubCarrier, YFlowResponse.class);
         verifyYFlowStatus(request.getYFlowId(), FlowStatus.UP);
-
+        verifyAffinity(request.getYFlowId());
         return request;
     }
 
@@ -344,6 +377,11 @@ public class YFlowUpdateServiceTest extends AbstractYFlowTest {
         verifyNoNorthboundResponse(flowDeleteHubCarrier);
     }
 
+    private void processUpdateRequest(YFlowRequest yFlowRequest) throws DuplicateKeyException {
+        YFlowUpdateService service = makeYFlowUpdateService(0);
+        service.handleRequest(yFlowRequest.getYFlowId(), new CommandContext(), yFlowRequest);
+    }
+
     private void processUpdateRequestAndSpeakerCommands(YFlowRequest yFlowRequest) throws DuplicateKeyException {
         FlowUpdateService flowUpdateService = makeFlowUpdateService(0);
         YFlowUpdateService service = makeYFlowUpdateService(flowUpdateService, 0);
@@ -354,8 +392,6 @@ public class YFlowUpdateServiceTest extends AbstractYFlowTest {
         handleSpeakerCommands((key, speakerRequest) -> {
             SpeakerFlowSegmentResponse commandResponse = buildSuccessfulSpeakerResponse(speakerRequest);
             handleAsyncResponse(flowUpdateService, service, key, commandResponse);
-            String revertKey = format("%s_revert", key);
-            handleAsyncResponse(flowUpdateService, service, revertKey, commandResponse);
         });
 
         verifyNoNorthboundResponse(flowUpdateHubCarrier);
