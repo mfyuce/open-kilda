@@ -135,6 +135,7 @@ public interface NorthboundServiceV2 {
 
     BfdPropertiesPayload getLinkBfd(TopologyDefinition.Isl isl);
 
+    //y-flows
     YFlow getYFlow(String yFlowId);
 
     List<YFlow> getAllYFlows();

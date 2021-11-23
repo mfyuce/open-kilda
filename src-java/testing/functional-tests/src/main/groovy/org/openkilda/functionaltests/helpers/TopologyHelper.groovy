@@ -3,6 +3,8 @@ package org.openkilda.functionaltests.helpers
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE
 
 import org.openkilda.functionaltests.helpers.model.SwitchPair
+import org.openkilda.functionaltests.helpers.model.SwitchTriplet
+import org.openkilda.messaging.info.event.PathNode
 import org.openkilda.messaging.info.event.SwitchChangeType
 import org.openkilda.model.SwitchId
 import org.openkilda.testing.model.topology.TopologyDefinition
@@ -97,6 +99,12 @@ class TopologyHelper {
         topology.switches.find { it.dpId == swId }
     }
 
+    List<SwitchTriplet> getSwitchTriplets() {
+        //get deep copy
+        def mapper = new ObjectMapper()
+        return mapper.readValue(mapper.writeValueAsString(getSwitchTripletsCached()), SwitchTriplet[]).toList()
+    }
+
     TopologyDefinition readCurrentTopology() {
         def switches = northbound.getAllSwitches()
         def links = northbound.getAllLinks()
@@ -133,7 +141,21 @@ class TopologyHelper {
                 .findAll { src, dst -> src != dst } //non-single-switch
                 .unique { it.sort() } //no reversed versions of same flows
                 .collect { Switch src, Switch dst ->
-                    new SwitchPair(src: src, dst: dst, paths: database.getPaths(src.dpId, dst.dpId)*.path)
+                    new SwitchPair(src: src, dst: dst, paths: getDbPathsCached(src.dpId, dst.dpId))
                 }
+    }
+
+    @Memoized
+    private List<SwitchTriplet> getSwitchTripletsCached() {
+        return [topology.activeSwitches, topology.activeSwitches, topology.activeSwitches].combinations()
+                .unique { triplet -> [triplet[0], [triplet[1], triplet[2]].sort()] } //no reversed versions of ep1/ep2
+                .collect { Switch shared, Switch ep1, Switch ep2 ->
+                    new SwitchTriplet(shared, ep1, ep2, getDbPathsCached(shared.dpId, ep1.dpId), getDbPathsCached(shared.dpId, ep2.dpId))
+                }
+    }
+
+    @Memoized
+    List<List<PathNode>> getDbPathsCached(SwitchId src, SwitchId dst) {
+        database.getPaths(src, dst)*.path
     }
 }

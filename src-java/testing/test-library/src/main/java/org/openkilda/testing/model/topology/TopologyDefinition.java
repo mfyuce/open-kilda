@@ -232,7 +232,7 @@ public class TopologyDefinition {
     @NonFinal
     @JsonNaming(SnakeCaseStrategy.class)
     @JsonIdentityInfo(property = "name", generator = ObjectIdGenerators.PropertyGenerator.class)
-    public static class Switch {
+    public static class Switch implements Comparable<Switch> {
 
         private static int DEFAULT_MAX_PORT = 100;
 
@@ -298,6 +298,11 @@ public class TopologyDefinition {
 
         public void setDpId(SwitchId switchId) {
             this.dpId = switchId;
+        }
+
+        @Override
+        public int compareTo(Switch other) {
+            return this.dpId.compareTo(other.dpId);
         }
     }
 
